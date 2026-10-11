@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>デイリーフラッシュ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=LINE+Seed+JP:wght@400;700&family=Noto+Sans:wght@400&family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav class="nav">
+    <a href="#/flash" data-route="flash">デイリーフラッシュ</a>
+    <a href="#/add" data-route="add">単語の追加</a>
+    <a href="#/list" data-route="list">単語一覧</a>
+  </nav>
+
+  <!-- デイリーフラッシュ -->
+  <section class="view" id="view-flash" hidden>
+    <header class="session-head">
+      <div class="remaining"><span id="remaining-count">0</span><span class="unit">枚</span></div>
+      <div class="bar"><div class="bar-fill" id="session-progress"></div></div>
+    </header>
+
+    <div class="stage" id="stage">
+      <div class="card-wrap" id="card-wrap">
+        <div class="card" id="card">
+          <div class="face front">
+            <div class="word en" id="card-word"></div>
+            <div class="ipa" id="card-ipa"></div>
+          </div>
+          <div class="face back">
+            <div class="meaning ja" id="card-meaning"></div>
+          </div>
+          <div class="tint" id="card-tint"></div>
+        </div>
+      </div>
+      <div class="commit-bar"><div class="commit-fill" id="commit-fill"></div></div>
+      <p class="hint" id="hint">クリック / スペースで裏返す　←スワイプで覚えた　→スワイプでまだ</p>
+    </div>
+
+    <div class="result" id="result" hidden>
+      <h1 class="ja">おつかれさま</h1>
+      <dl class="stats">
+        <div><dt>今日の正答</dt><dd id="res-correct">0</dd></div>
+        <div><dt>明日の復習予定</dt><dd id="res-tomorrow">0</dd></div>
+        <div><dt>連続日数</dt><dd id="res-streak">0</dd></div>
+      </dl>
+      <p class="sub" id="res-note"></p>
+      <button class="btn" id="res-more" hidden>続けて出題する</button>
+    </div>
+  </section>
+
+  <!-- 単語の追加 -->
+  <section class="view narrow" id="view-add" hidden>
+    <h1 class="title">単語の追加</h1>
+    <form id="add-single" class="row">
+      <input id="add-word" class="en" placeholder="英単語" autocomplete="off" required>
+      <input id="add-meaning" class="ja" placeholder="日本語訳" autocomplete="off" required>
+      <button class="btn">追加</button>
+    </form>
+    <p class="sub">まとめて追加（1行に「英単語,日本語」）</p>
+    <form id="add-bulk">
+      <textarea id="add-bulk-text" rows="10" placeholder="chore,雑用&#10;detect,見つける"></textarea>
+      <button class="btn">まとめて追加</button>
+    </form>
+    <ul class="added" id="added-list"></ul>
+  </section>
+
+  <!-- 単語一覧 -->
+  <section class="view" id="view-list" hidden>
+    <div class="list-head">
+      <h1 class="title">単語一覧</h1>
+      <div class="list-tools">
+        <label class="toggle"><input type="checkbox" id="opt-sound"> 効果音</label>
+        <label class="toggle"><input type="checkbox" id="opt-invert"> スワイプ方向を反転</label>
+        <button class="link" id="export-json">JSONを書き出す</button>
+      </div>
+    </div>
+    <p class="sub" id="list-summary"></p>
+    <table class="words">
+      <thead><tr><th>英単語</th><th>発音記号</th><th>日本語訳</th><th>段階</th><th>次回</th><th></th></tr></thead>
+      <tbody id="list-body"></tbody>
+    </table>
+  </section>
+
+  <script src="js/storage.js"></script>
+  <script src="js/scheduler.js"></script>
+  <script src="js/ipa.js"></script>
+  <script src="js/haptic.js"></script>
+  <script src="js/swipe.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
