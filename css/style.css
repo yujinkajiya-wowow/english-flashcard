@@ -81,7 +81,7 @@ body {
 .sub { color: var(--sub); font-size: 13px; }
 
 /* ---------- セッション ---------- */
-#view-flash { height: 100vh; overflow: hidden; display: flex; flex-direction: column; padding-top: 48px; }
+#view-flash, #view-test { height: 100vh; overflow: hidden; display: flex; flex-direction: column; padding-top: 48px; }
 .session-head { width: min(240px, 60vw); margin: 0 auto; text-align: center; }
 .remaining { color: var(--sub); font-size: 13px; }
 .remaining::before { content: "残り "; }
@@ -307,3 +307,36 @@ textarea { font-family: var(--font-en), var(--font-ja); font-weight: 400; resize
 }
 .ex-send:disabled, .ex-ask input:disabled { opacity: .4; cursor: default; }
 .apikey { width: 140px; padding: 4px 8px; font-size: 12px; }
+
+/* ---------- テスト ---------- */
+.tcard { cursor: default; }
+.tcard .face { gap: 4.5cqw; }
+.t-write { width: 60cqw; display: flex; flex-direction: column; align-items: center; }
+.t-input, .t-choice {
+  border: 3px solid #d9d9d9; border-radius: 2.6cqw; background: #fff;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, .07);
+  font-size: clamp(14px, 2.9cqw, 30px); color: var(--fg);
+  transition: border-color .15s, background-color .15s;
+}
+.t-input {
+  width: 100%; height: 9cqw; padding: 0 3cqw; text-align: center; outline: none;
+}
+.t-input::placeholder { color: #a9a9a9; }
+.t-input:focus { border-color: #bdbdbd; }
+.t-input:disabled { opacity: 1; }
+.t-correct { margin: 1.6cqw 0 0; min-height: 1.4em; font-size: clamp(12px, 2cqw, 20px); color: rgb(var(--ok)); }
+.t-choices {
+  width: 86cqw; display: flex; flex-wrap: wrap; justify-content: center; gap: 1.6cqw;
+}
+.t-break { flex-basis: 100%; height: 0; }
+.t-choice {
+  width: 27cqw; height: 7.2cqw; padding: 0 1cqw; cursor: pointer;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.t-choice:hover:not(:disabled) { border-color: #bdbdbd; }
+.t-choice:disabled { cursor: default; }
+.t-input.is-ok, .t-choice.is-ok { border-color: rgb(var(--ok)); background: rgba(var(--ok), .18); }
+.t-input.is-ng, .t-choice.is-ng { border-color: rgb(var(--ng)); background: rgba(var(--ng), .14); }
+.t-missed { list-style: none; padding: 0; margin: 24px 0 0; min-width: min(360px, 80vw); text-align: left; }
+.t-missed li { display: flex; justify-content: space-between; gap: 24px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+.t-missed .ja { font-weight: 400; color: var(--sub); }

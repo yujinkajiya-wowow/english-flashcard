@@ -14,12 +14,13 @@
   let route = "flash";
   function go() {
     route = (location.hash.replace("#/", "") || "flash").split("?")[0];
-    if (!["flash", "add", "list"].includes(route)) route = "flash";
-    for (const v of ["flash", "add", "list"]) $("view-" + v).hidden = v !== route;
+    if (!["flash", "add", "test", "list"].includes(route)) route = "flash";
+    for (const v of ["flash", "add", "test", "list"]) $("view-" + v).hidden = v !== route;
     Explain.close();
     document.querySelectorAll(".nav a").forEach((a) => a.classList.toggle("active", a.dataset.route === route));
     if (route === "flash") enterFlash();
     if (route === "list") renderList();
+    if (route === "test") window.DF.Test.enter();
   }
   window.addEventListener("hashchange", go);
 
