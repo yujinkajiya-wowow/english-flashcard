@@ -3,6 +3,9 @@
   const $ = (id) => document.getElementById(id);
   const TODAY = Scheduler.today();
   const LOCK_AFTER_COMMIT = 500;
+  // 開発中（localhost / file:// / ?dev）だけ「もう一度」ボタンを出す
+  const DEV =
+    ["localhost", "127.0.0.1", ""].includes(location.hostname) || new URLSearchParams(location.search).has("dev");
 
   Storage.seedIfEmpty(TODAY);
 
@@ -47,6 +50,7 @@
   }
 
   function newSession() {
+    Storage.saveSnapshotIfNone(TODAY);
     const { review, fresh } = Scheduler.buildToday(Storage.getWords(), TODAY);
     // 復習を先に、新規を後に（それぞれの中はシャッフル）
     const queue = shuffle(review).concat(shuffle(fresh));
@@ -180,6 +184,7 @@
     $("session-progress").style.width = "100%";
     const more = hasMoreToday();
     $("res-more").hidden = !more;
+    $("res-again").hidden = !DEV;
     $("res-note").textContent = day.total
       ? "正答は各単語の1回目の回答で数えています"
       : "今日出題する単語はありません。単語を追加してください";
@@ -191,6 +196,13 @@
     if (!session.queue.length) return showResult();
     showStage();
     showCard();
+  });
+
+  // 今日の回答をなかったことにして最初からやり直す（スケジュール・正答数も巻き戻る）
+  $("res-again").addEventListener("click", () => {
+    Storage.restoreSnapshot(TODAY);
+    session = null;
+    enterFlash();
   });
 
   card.addEventListener("click", () => {
