@@ -34,8 +34,8 @@
   const swipe = new Swipe({
     target: wrap,
     card,
-    tint: $("card-tint"),
-    bar: $("commit-fill"),
+    glowLeft: $("glow-left"),
+    glowRight: $("glow-right"),
     onCommit: (dir) => answer(dir),
     isInverted: () => Storage.getSettings().invert,
     isEnabled: () => route === "flash" && !!session && session.queue.length > 0 && !$("stage").hidden,
@@ -128,7 +128,7 @@
   async function answer(dir) {
     if (busy || !session || !session.queue.length) return;
     busy = true;
-    swipe.cancelHold();
+    swipe.cancel();
     swipe.lock(60_000);
     // 左 = 覚えている / 右 = 覚えていない
     const result = dir === "left" ? "ok" : "ng";

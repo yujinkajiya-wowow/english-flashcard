@@ -13,7 +13,8 @@ python3 -m http.server 8000   # → http://localhost:8000
 ## 操作
 
 - クリック / スペース：裏返す
-- トラックパッドの2本指スワイプ（左＝覚えている、右＝覚えていない）。閾値を超えた位置で2秒止めると確定
+- トラックパッドの2本指スワイプ（左＝覚えている、右＝覚えていない）。大きくスワイプして、端が色づいた状態で指を離すと確定。足りなければ中央に戻る
+  - 動かし始めは敏感で、端に近づくほど重くなる。調整は `js/swipe.js` 冒頭の定数
 - ← / → キー：即確定
 - `?date=2026-10-20` を URL に付けるとその日付として動く（スケジュールの確認用）
 
@@ -23,7 +24,7 @@ python3 -m http.server 8000   # → http://localhost:8000
 |---|---|
 | `js/storage.js` | localStorage の読み書きはここだけ。DB に移すときはここを差し替える |
 | `js/scheduler.js` | 復習間隔・出題リストの計算 |
-| `js/swipe.js` | wheel(deltaX) / ドラッグでのカード操作、2秒ホールド確定 |
+| `js/swipe.js` | wheel(deltaX) / ドラッグでのカード操作、離したら確定 |
 | `js/haptic.js` | `haptic()`。Web では効果音＋揺れ、`navigator.vibrate` 対応端末は振動、Tauri/Electron ではネイティブを呼ぶ |
 | `js/ipa.js` | 発音記号の取得と保存 |
 | `js/app.js` | 画面（フラッシュ / 追加 / 一覧） |

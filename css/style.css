@@ -112,13 +112,11 @@ body {
   touch-action: none;
 }
 .card.flipped { transform: rotateY(180deg); }
-.face, .tint {
+.face {
   position: absolute; inset: 0;
   border-radius: 14px;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-}
-.face {
   background: #fff;
   border: 1px solid var(--line);
   box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 8px 30px rgba(0,0,0,.06);
@@ -135,20 +133,44 @@ body {
   font-size: clamp(12px, 2.4cqw, 26px);
   color: var(--sub); margin-top: 1.6cqw; min-height: 1em;
 }
-/* スワイプ中の色。表裏どちらでも見えるよう、回転しない層にする */
-.tint {
-  pointer-events: none;
-  border: 2px solid transparent;
-  transform: translateZ(1px);
-  backface-visibility: visible;
-}
-.card.flipped .tint { transform: rotateY(180deg) translateZ(1px); }
 
-.commit-bar {
-  width: min(160px, 40vw); height: 2px; margin-top: 28px;
-  background: transparent; border-radius: 1px; overflow: hidden;
+/* スワイプ中の色：画面の端だけ。境界が見えないよう、長い距離をかけて透明に溶かす */
+.glow {
+  position: fixed; top: 0; bottom: 0; width: 42vw; z-index: 0;
+  pointer-events: none; opacity: 0;
+  transition: opacity .18s linear;
 }
-.commit-fill { height: 100%; width: 0; background: var(--fg); }
+.glow-left {
+  left: 0;
+  background: linear-gradient(to right,
+    rgba(var(--ok), 0.300) 0%,
+    rgba(var(--ok), 0.228) 10%,
+    rgba(var(--ok), 0.168) 20%,
+    rgba(var(--ok), 0.119) 30%,
+    rgba(var(--ok), 0.079) 40%,
+    rgba(var(--ok), 0.049) 50%,
+    rgba(var(--ok), 0.028) 60%,
+    rgba(var(--ok), 0.013) 70%,
+    rgba(var(--ok), 0.005) 80%,
+    rgba(var(--ok), 0.001) 90%,
+    rgba(var(--ok), 0.000) 100%);
+}
+.glow-right {
+  right: 0;
+  background: linear-gradient(to left,
+    rgba(var(--ng), 0.270) 0%,
+    rgba(var(--ng), 0.205) 10%,
+    rgba(var(--ng), 0.151) 20%,
+    rgba(var(--ng), 0.107) 30%,
+    rgba(var(--ng), 0.072) 40%,
+    rgba(var(--ng), 0.045) 50%,
+    rgba(var(--ng), 0.025) 60%,
+    rgba(var(--ng), 0.012) 70%,
+    rgba(var(--ng), 0.004) 80%,
+    rgba(var(--ng), 0.001) 90%,
+    rgba(var(--ng), 0.000) 100%);
+}
+.session-head, .stage, .result { position: relative; z-index: 1; }
 .hint { color: var(--sub); font-size: 12px; margin-top: 18px; text-align: center; }
 
 /* ---------- 結果画面 ---------- */
