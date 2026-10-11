@@ -306,5 +306,4 @@ textarea { font-family: var(--font-en), var(--font-ja); font-weight: 400; resize
   display: grid; place-items: center; background: #222; color: #fff; cursor: pointer;
 }
 .ex-send:disabled, .ex-ask input:disabled { opacity: .4; cursor: default; }
-.ex-send svg { transform: translateX(-1px); }
 .apikey { width: 140px; padding: 4px 8px; font-size: 12px; }
