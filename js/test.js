@@ -123,7 +123,7 @@
         box.appendChild(b);
         if (i === 0) box.appendChild(Object.assign(document.createElement("span"), { className: "t-break" }));
       });
-      $("t-hint").textContent = "クリック、または 1〜4 キーで選ぶ";
+      $("t-hint").textContent = "クリック、または矢印キー（↑ ← ↓ →）で選ぶ";
     }
     updateProgress();
   }
@@ -361,8 +361,11 @@
       return submitTranslate();
     }
     if (!item || item.type !== "choice") return;
-    const n = Number(e.key);
-    if (n >= 1 && n <= item.choices.length) choose(item.choices[n - 1]);
+    // 選択肢は上に1つ・下に3つで、矢印キーの並びと同じ形。↑=上、← ↓ →=下の左・中・右
+    const n = { ArrowUp: 0, ArrowLeft: 1, ArrowDown: 2, ArrowRight: 3 }[e.key];
+    if (n === undefined || n >= item.choices.length) return;
+    e.preventDefault();
+    choose(item.choices[n]);
   });
 
   window.DF = window.DF || {};
