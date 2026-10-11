@@ -1,5 +1,5 @@
 (function () {
-  const { Storage, Scheduler, IPA, Swipe, haptic } = window.DF;
+  const { Storage, Scheduler, IPA, Swipe, haptic, Explain } = window.DF;
   const $ = (id) => document.getElementById(id);
   const TODAY = Scheduler.today();
   const LOCK_AFTER_COMMIT = 500;
@@ -16,6 +16,7 @@
     route = (location.hash.replace("#/", "") || "flash").split("?")[0];
     if (!["flash", "add", "list"].includes(route)) route = "flash";
     for (const v of ["flash", "add", "list"]) $("view-" + v).hidden = v !== route;
+    Explain.close();
     document.querySelectorAll(".nav a").forEach((a) => a.classList.toggle("active", a.dataset.route === route));
     if (route === "flash") enterFlash();
     if (route === "list") renderList();
@@ -37,7 +38,8 @@
     glowRight: $("glow-right"),
     onCommit: (dir) => answer(dir),
     isInverted: () => Storage.getSettings().invert,
-    isEnabled: () => route === "flash" && !!session && session.queue.length > 0 && !$("stage").hidden,
+    isEnabled: () =>
+      route === "flash" && !!session && session.queue.length > 0 && !$("stage").hidden && !Explain.isOpen(),
   });
 
   function shuffle(a) {
@@ -212,8 +214,13 @@
     flip();
   });
 
+  $("ai-btn").addEventListener("click", (e) => {
+    e.stopPropagation(); // カードが裏返らないように
+    if (session && session.queue.length) Explain.open(session.queue[0]);
+  });
+
   window.addEventListener("keydown", (e) => {
-    if (route !== "flash" || $("stage").hidden) return;
+    if (route !== "flash" || $("stage").hidden || Explain.isOpen()) return;
     if (e.target.matches("input, textarea")) return;
     if (e.code === "Space") {
       e.preventDefault();
@@ -325,6 +332,7 @@
         if (!f) return;
         const patch = { [f]: e.target.value.trim() };
         if (f === "ipa") patch.ipaStatus = "manual";
+        if (f === "word" || f === "meaning") patch.ai = null; // 解説を作り直す
         Storage.updateWord(w.id, patch);
       });
       tr.querySelector(".del").addEventListener("click", () => {
@@ -341,6 +349,8 @@
   $("opt-invert").checked = settings.invert;
   $("opt-sound").addEventListener("change", (e) => Storage.saveSettings({ sound: e.target.checked }));
   $("opt-invert").addEventListener("change", (e) => Storage.saveSettings({ invert: e.target.checked }));
+  $("opt-apikey").value = settings.apiKey;
+  $("opt-apikey").addEventListener("change", (e) => Storage.saveSettings({ apiKey: e.target.value.trim() }));
   $("export-json").addEventListener("click", () => {
     const blob = new Blob([JSON.stringify(Storage.exportAll(), null, 2)], { type: "application/json" });
     const a = document.createElement("a");
