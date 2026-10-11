@@ -92,11 +92,14 @@
     return JSON.parse(text);
   }
 
-  /* 追加の質問。毎回、前提（context）とそれまでの質疑を1つのメッセージにまとめて送る */
-  async function chat(context, qa, question) {
-    const past = (qa || []).map((x) => `Q. ${x.q}\nA. ${x.a}`).join("\n\n");
+  /* 解説を踏まえた追加の質問。毎回、それまでの内容を1つのメッセージにまとめて送る */
+  async function ask(word, question) {
+    const ai = word.ai || {};
+    const past = (ai.qa || []).map((x) => `Q. ${x.q}\nA. ${x.a}`).join("\n\n");
     const text = [
-      context,
+      `英単語：${word.word}`,
+      `単語帳に登録した日本語訳：${word.meaning}`,
+      `これまでの解説：${JSON.stringify({ pos: ai.pos, meaning: ai.meaning, notes: ai.notes, examples: ai.examples })}`,
       past && `これまでの質問と回答：\n${past}`,
       `新しい質問：${question}`,
       "質問に日本語で、短く分かりやすく答えてください。見出しや箇条書きの記号、太字の記号は使わず、普通の文章で。",
@@ -106,49 +109,6 @@
     return call(text);
   }
 
-  /* 単語解説を踏まえた質問 */
-  function ask(word, question) {
-    const ai = word.ai || {};
-    const context = [
-      `英単語：${word.word}`,
-      `単語帳に登録した日本語訳：${word.meaning}`,
-      `これまでの解説：${JSON.stringify({ pos: ai.pos, meaning: ai.meaning, notes: ai.notes, examples: ai.examples })}`,
-    ].join("\n");
-    return chat(context, ai.qa, question);
-  }
-
-  const GRADE_SCHEMA = {
-    type: "OBJECT",
-    properties: {
-      correct: { type: "BOOLEAN", description: "正解なら true" },
-      corrected: { type: "STRING", description: "学習者の英文のスペルミスだけを直したもの。それ以外は一字一句そのまま" },
-      comment: { type: "STRING", description: "日本語で一言（1文）のコメント" },
-    },
-    required: ["correct", "corrected", "comment"],
-    propertyOrdering: ["correct", "corrected", "comment"],
-  };
-
-  /* 文章翻訳の採点 → { correct, corrected, comment } */
-  async function grade(word, ja, en, answer) {
-    const text = [
-      "日本語の文を英語に訳すテストを採点してください。",
-      `テストしている英単語：${word.word}（${word.meaning}）`,
-      `問題（日本語）：${ja}`,
-      `模範解答の一例：${en}`,
-      `学習者の解答：${answer}`,
-      "",
-      "採点のルール：",
-      "- 多少のスペルミス（タイプミス）は減点しない。corrected にはスペルミスだけを直した学習者の英文を入れる。語順・単語の選び方・文法は直さず、学習者が書いたまま残す",
-      "- 問題文と意味の単位で違うこと（抜けている、余計な内容がある、別の意味になっている）を書いていたら不正解",
-      "- テストしている英単語（活用形は可）を使っていなければ不正解",
-      "- 冠詞や単数・複数など、意味が変わらない細かい文法の誤りは正解のままにして、comment で指摘する",
-      "- 模範解答と言い回しが違っても、意味が同じなら正解",
-      "- comment は日本語で一言。正解なら良い点か直すと良くなる点、不正解なら何が違うか",
-    ].join("\n");
-    const out = await call(text, { responseMimeType: "application/json", responseSchema: GRADE_SCHEMA });
-    return JSON.parse(out);
-  }
-
   window.DF = window.DF || {};
-  window.DF.AI = { hasKey, explain, ask, chat, grade };
+  window.DF.AI = { hasKey, explain, ask };
 })();

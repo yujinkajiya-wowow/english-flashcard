@@ -1,6 +1,5 @@
 /*
  * AI解説パネル。カード裏面の「AI解説」ボタンから開く。
- * openChat(ctx) はテストの文章翻訳用：解説は出さず、その問題についてのチャットだけ。
  * 表示する文字はすべて textContent で入れる（AI の返事をそのまま HTML にしない）
  */
 (function () {
@@ -8,7 +7,6 @@
   const $ = (id) => document.getElementById(id);
   const panel = $("explain");
   let wordId = null;
-  let chat = null;          // { context: 問題の説明文, qa: [{q, a}] }。履歴は呼び出し側の ctx に残る
   let busy = false;
 
   function isOpen() {
@@ -17,8 +15,6 @@
 
   function open(id) {
     wordId = id;
-    chat = null;
-    $("ex-top").hidden = false;
     panel.hidden = false;
     $("ex-question").value = "";
     render();
@@ -26,21 +22,9 @@
     if (w && !w.ai) generate();
   }
 
-  function openChat(ctx) {
-    wordId = null;
-    chat = ctx;
-    chat.qa = chat.qa || [];
-    $("ex-top").hidden = true;
-    panel.hidden = false;
-    $("ex-question").value = "";
-    render();
-    $("ex-question").focus();
-  }
-
   function close() {
     panel.hidden = true;
     wordId = null;
-    chat = null;
   }
 
   async function generate() {
@@ -61,27 +45,7 @@
     }
   }
 
-  async function askChat(question) {
-    const ctx = chat;
-    if (busy || !question) return;
-    busy = true;
-    render({ pending: question });
-    try {
-      const a = await AI.chat(ctx.context, ctx.qa, question);
-      ctx.qa.push({ q: question, a });
-      busy = false;
-      if (chat === ctx) {
-        $("ex-question").value = "";
-        render();
-      }
-    } catch (e) {
-      busy = false;
-      if (chat === ctx) render({ error: e.message });
-    }
-  }
-
   async function ask(question) {
-    if (chat) return askChat(question);
     const id = wordId;
     const w = Storage.getWord(id);
     if (!w || !w.ai || busy || !question) return;
@@ -109,42 +73,7 @@
     return e;
   }
 
-  function needKeyBox() {
-    const box = el("section", "ex-box");
-    box.append(el("h3", "ex-head", "APIキーが必要です"));
-    box.append(el("p", "ex-text", "単語一覧の右上にある「Gemini APIキー」に、Google AI Studio で作った API キーを入れてください。キーはこのブラウザにだけ保存されます。"));
-    return box;
-  }
-
-  function qaBox(list, state) {
-    const qa = list.slice();
-    if (state.pending) qa.push({ q: state.pending, a: null });
-    if (!qa.length && !state.error) return null;
-    const box = el("section", "ex-box");
-    box.append(el("h3", "ex-head", "質問"));
-    for (const x of qa) {
-      const row = el("div", "ex-qa");
-      row.append(el("p", "ex-q", x.q), el("p", "ex-text" + (x.a ? "" : " ex-sub"), x.a || "考えています…"));
-      box.append(row);
-    }
-    if (state.error) box.append(el("p", "ex-text ex-error", state.error));
-    return box;
-  }
-
-  function renderChat(state) {
-    const body = $("ex-body");
-    body.innerHTML = "";
-    if (!AI.hasKey()) body.append(needKeyBox());
-    const box = qaBox(chat.qa, state);
-    if (box) body.append(box);
-    const canAsk = AI.hasKey() && !busy;
-    $("ex-question").disabled = !canAsk;
-    $("ex-send").disabled = !canAsk;
-    if (state.pending) box.scrollIntoView({ block: "end", behavior: "smooth" });
-  }
-
   function render(state = {}) {
-    if (chat) return renderChat(state);
     const w = Storage.getWord(wordId);
     if (!w) return close();
     const ai = w.ai;
@@ -158,7 +87,11 @@
     body.innerHTML = "";
 
     if (!AI.hasKey()) {
-      body.append(needKeyBox());
+      const box = el("section", "ex-box");
+      box.append(el("h3", "ex-head", "APIキーが必要です"));
+      const p = el("p", "ex-text", "単語一覧の右上にある「Gemini APIキー」に、Google AI Studio で作った API キーを入れてください。キーはこのブラウザにだけ保存されます。");
+      box.append(p);
+      body.append(box);
     } else if (!ai) {
       const box = el("section", "ex-box");
       if (state.loading) {
@@ -187,8 +120,19 @@
         }
         body.append(box);
       }
-      const box = qaBox(ai.qa || [], state);
-      if (box) body.append(box);
+      const qa = (ai.qa || []).slice();
+      if (state.pending) qa.push({ q: state.pending, a: null });
+      if (qa.length || state.error) {
+        const box = el("section", "ex-box");
+        box.append(el("h3", "ex-head", "質問"));
+        for (const x of qa) {
+          const row = el("div", "ex-qa");
+          row.append(el("p", "ex-q", x.q), el("p", "ex-text" + (x.a ? "" : " ex-sub"), x.a || "考えています…"));
+          box.append(row);
+        }
+        if (state.error) box.append(el("p", "ex-text ex-error", state.error));
+        body.append(box);
+      }
     }
 
     const canAsk = AI.hasKey() && !!ai && !busy;
@@ -209,5 +153,5 @@
     if (isOpen() && e.key === "Escape") close();
   });
 
-  window.DF.Explain = { open, openChat, close, isOpen };
+  window.DF.Explain = { open, close, isOpen };
 })();
