@@ -13,6 +13,7 @@
   <nav class="nav">
     <a href="#/flash" data-route="flash">デイリーフラッシュ</a>
     <a href="#/add" data-route="add">単語の追加</a>
+    <a href="#/test" data-route="test">テスト</a>
     <a href="#/list" data-route="list">単語一覧</a>
   </nav>
 
@@ -52,6 +53,42 @@
       <p class="sub" id="res-note"></p>
       <button class="btn" id="res-more" hidden>続けて出題する</button>
       <button class="link dev" id="res-again" hidden>もう一度（開発用：今日の回答を巻き戻す）</button>
+    </div>
+  </section>
+
+  <!-- テスト -->
+  <section class="view" id="view-test" hidden>
+    <div class="glow glow-left" id="t-glow-left"></div>
+    <div class="glow glow-right" id="t-glow-right"></div>
+    <header class="session-head">
+      <div class="remaining"><span id="t-remaining">0</span><span class="unit">問</span></div>
+      <div class="bar"><div class="bar-fill" id="t-progress"></div></div>
+    </header>
+
+    <div class="stage" id="t-stage">
+      <div class="card-wrap" id="t-wrap">
+        <div class="card tcard">
+          <div class="face">
+            <div class="meaning ja" id="t-question"></div>
+            <form class="t-write" id="t-write" hidden>
+              <input class="t-input en" id="t-input" placeholder="write the answer..." autocomplete="off" autocapitalize="off" spellcheck="false">
+              <p class="t-correct en" id="t-correct"></p>
+            </form>
+            <div class="t-choices" id="t-choices" hidden></div>
+          </div>
+        </div>
+      </div>
+      <p class="hint" id="t-hint"></p>
+    </div>
+
+    <div class="result" id="t-result" hidden>
+      <h1 class="ja">テスト終了</h1>
+      <dl class="stats">
+        <div><dt>正答</dt><dd id="t-score">0</dd></div>
+      </dl>
+      <ul class="t-missed" id="t-missed"></ul>
+      <p class="sub" id="t-note"></p>
+      <button class="btn" id="t-again">もう一度テストする</button>
     </div>
   </section>
 
@@ -122,6 +159,7 @@
   <script src="js/swipe.js"></script>
   <script src="js/ai.js"></script>
   <script src="js/explain.js"></script>
+  <script src="js/test.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
