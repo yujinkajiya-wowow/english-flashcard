@@ -301,8 +301,9 @@
   }
 
   function glow(dir) {
-    $("t-glow-left").style.opacity = dir === "left" ? 1 : 0;
-    $("t-glow-right").style.opacity = dir === "right" ? 1 : 0;
+    // フラッシュカードより控えめに
+    $("t-glow-left").style.opacity = dir === "left" ? 0.55 : 0;
+    $("t-glow-right").style.opacity = dir === "right" ? 0.55 : 0;
   }
 
   function showResult() {
