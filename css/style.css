@@ -340,3 +340,20 @@ textarea { font-family: var(--font-en), var(--font-ja); font-weight: 400; resize
 .t-missed { list-style: none; padding: 0; margin: 24px 0 0; min-width: min(360px, 80vw); text-align: left; }
 .t-missed li { display: flex; justify-content: space-between; gap: 24px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
 .t-missed .ja { font-weight: 400; color: var(--sub); }
+.t-sentence-q { font-size: clamp(14px, 3.4cqw, 40px); line-height: 1.4; }
+.t-translate { width: 72cqw; display: flex; flex-direction: column; align-items: stretch; }
+.t-sentence { text-align: left; padding: 0 4.5cqw; font-size: clamp(13px, 2.6cqw, 28px); }
+div.t-sentence { display: flex; align-items: center; min-height: 9cqw; padding-top: 1.6cqw; padding-bottom: 1.6cqw; white-space: pre-wrap; }
+.t-sentence mark { background: rgba(0, 0, 0, .14); color: inherit; border-radius: 2px; }
+.t-status {
+  margin: 1.4cqw 2cqw 0 0; min-height: 1.4em; text-align: right;
+  font-family: var(--font-ja); font-weight: 700; font-size: clamp(11px, 1.6cqw, 17px);
+  color: #8a8a8a; letter-spacing: .25em;
+}
+.t-status.is-error { color: rgb(var(--ng)); letter-spacing: 0; }
+.t-comment {
+  margin: 0; text-align: center; color: #8a8a8a;
+  font-family: var(--font-ja); font-weight: 700; font-size: clamp(11px, 1.6cqw, 17px); line-height: 1.6;
+}
+.t-comment:empty { display: none; }
+#t-hint { cursor: default; }
