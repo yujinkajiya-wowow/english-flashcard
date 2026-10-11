@@ -115,6 +115,8 @@
     wrap.classList.remove("enter");
     void wrap.offsetWidth;
     wrap.classList.add("enter");
+    // 付けっぱなしにすると、後で他のアニメーションを外したときに登場アニメが再生され直す
+    wrap.addEventListener("animationend", () => wrap.classList.remove("enter"), { once: true });
     updateProgress();
   }
 

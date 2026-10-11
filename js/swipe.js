@@ -15,12 +15,13 @@
  */
 (function () {
   /* ---- 調整用（すべてカード幅に対する割合） ---- */
-  const MAX = 0.6;          // カードが動ける上限
-  const THRESHOLD = 0.42;   // ここを越えて離すと確定（MAX の 7 割。大きめにスワイプしないと届かない）
-  const SOFTNESS = 0.4;     // 曲線のなだらかさ。小さいほど最初が敏感で、早く重くなる
+  const MAX = 0.5;          // カードが動ける上限
+  const THRESHOLD = 0.44;   // ここを越えて離すと確定（MAX の 9 割弱。重い区間を長く押し込まないと届かない）
+  const SOFTNESS = 0.25;    // 曲線のなだらかさ。小さいほど最初が敏感で、早く重くなる
   const RAW_MAX = 2.5;      // 指の移動量の上限（慣性で積み上がりすぎないように）
 
   const MAX_ROTATE = 7;     // deg
+  const FLY_MS = 380;       // 確定したカードが画面外に消えるまで
   const RELEASE_MS = 160;   // wheel がこれだけ途切れたら指を離したとみなす
   const INERTIA_GAP = 120;  // ロック明けは wheel が一度これだけ途切れるまで無視（慣性の残りを捨てる）
 
@@ -195,28 +196,22 @@
       this.glow[other].style.opacity = 0;
     }
 
-    /* 確定したカードを飛ばす。終わったら resolve */
+    /* 確定したカードを、今の位置からそのまま画面の外まで飛ばす。終わったら resolve */
     flyOut(dir) {
       return new Promise((resolve) => {
         const el = this.target;
-        this._glow(dir, 1);
-        el.classList.remove("thud");
+        const w = this.width;
+        const s = dir === "left" ? -1 : 1;
+        el.classList.remove("enter");
+        el.classList.add("fly");
         void el.offsetWidth;
-        el.classList.add("thud");
+        // カードの中心が画面中央にあるので、半画面 + カード1枚分動かせば完全に見えなくなる
+        el.style.transform = `translateX(${s * (window.innerWidth / 2 + w)}px) rotate(${s * 18}deg)`;
+        this._glow(dir, 0);
         setTimeout(() => {
-          el.classList.remove("thud");
-          el.classList.add("fly");
-          const w = this.width;
-          const to = (dir === "left" ? -1 : 1) * (w * 1.1 + window.innerWidth * 0.3);
-          el.style.transform = `translateX(${to}px) rotate(${dir === "left" ? -14 : 14}deg)`;
-          el.style.opacity = "0";
-          this.glow[dir].style.opacity = 0;
-          setTimeout(() => {
-            el.classList.remove("fly");
-            el.style.opacity = "";
-            resolve();
-          }, 450);
-        }, 160);
+          el.classList.remove("fly");
+          resolve();
+        }, FLY_MS);
       });
     }
   }
