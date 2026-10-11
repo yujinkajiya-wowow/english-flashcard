@@ -1,34 +1,35 @@
 /*
- * AI解説（Claude API）
+ * AI解説（Gemini API）
  *
  * 静的サイトなのでサーバーが無い。ブラウザから直接 API を呼ぶ。
  * API キーは自分のブラウザの localStorage にだけ保存する（単語一覧の設定から入力）。
- * SDK は vendor/ に1ファイルにまとめたものを、初めて使うときに読み込む。
+ * 無料枠で使う前提なので、無料枠の回数が多い Flash-Lite を使う。
+ * "-latest" は Google 側で最新版に自動で切り替わる別名。
  *
  * 生成した解説は単語データ（word.ai）に保存して、同じ単語で何度も API を叩かない。
  */
 (function () {
-  const SDK_SRC = "vendor/anthropic-sdk-0.128.0.js";
-  const MODEL = "claude-opus-5-5";
+  const MODEL = "gemini-flash-lite-latest";
+  const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
 
+  // Gemini の responseSchema（OpenAPI 形式。additionalProperties は書けない）
   const SCHEMA = {
-    type: "object",
+    type: "OBJECT",
     properties: {
-      pos: { type: "string", description: "品詞（日本語。例：接続副詞、他動詞、名詞）" },
-      meaning: { type: "string", description: "主な意味を読点区切りで2〜3個" },
-      notes: { type: "string", description: "注意点。無ければ空文字" },
+      pos: { type: "STRING", description: "品詞（日本語。例：接続副詞、他動詞、名詞）" },
+      meaning: { type: "STRING", description: "主な意味を読点区切りで2〜3個" },
+      notes: { type: "STRING", description: "注意点。無ければ空文字" },
       examples: {
-        type: "array",
+        type: "ARRAY",
         items: {
-          type: "object",
-          properties: { en: { type: "string" }, ja: { type: "string" } },
+          type: "OBJECT",
+          properties: { en: { type: "STRING" }, ja: { type: "STRING" } },
           required: ["en", "ja"],
-          additionalProperties: false,
         },
       },
     },
     required: ["pos", "meaning", "notes", "examples"],
-    additionalProperties: false,
+    propertyOrdering: ["pos", "meaning", "notes", "examples"],
   };
 
   const SYSTEM = [
@@ -38,22 +39,6 @@
     "examples は自然でよく使う例文を2つ。en は英文、ja はその自然な日本語訳です。",
   ].join("\n");
 
-  let sdk = null;
-  function loadSdk() {
-    if (sdk) return sdk;
-    sdk = new Promise((resolve, reject) => {
-      const s = document.createElement("script");
-      s.src = SDK_SRC;
-      s.onload = () => resolve(window.Anthropic);
-      s.onerror = () => {
-        sdk = null;
-        reject(new Error("SDK の読み込みに失敗しました"));
-      };
-      document.head.appendChild(s);
-    });
-    return sdk;
-  }
-
   function apiKey() {
     return (window.DF.Storage.getSettings().apiKey || "").trim();
   }
@@ -61,50 +46,48 @@
     return !!apiKey();
   }
 
-  async function call(params) {
-    const Anthropic = await loadSdk();
-    const client = new Anthropic({ apiKey: apiKey(), dangerouslyAllowBrowser: true });
+  async function call(text, generationConfig) {
     let res;
     try {
-      res = await client.beta.messages.create({
-        model: MODEL,
-        max_tokens: 16000,
-        // 単語の解説はそこまで考え込まなくていいので速さ優先
-        output_config: Object.assign({ effort: "low" }, params.output_config),
-        // 安全フィルタに誤って止められたときは、API 側で別のモデルに切り替えて続ける
-        betas: ["server-side-fallback-2026-07-01"],
-        fallbacks: "default",
-        system: SYSTEM,
-        messages: params.messages,
+      res = await fetch(ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey() },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: SYSTEM }] },
+          contents: [{ role: "user", parts: [{ text }] }],
+          generationConfig,
+        }),
       });
     } catch (e) {
-      throw new Error(describeError(Anthropic, e));
+      throw new Error("通信できませんでした");
     }
-    if (res.stop_reason === "refusal") throw new Error("AI に回答を断られました");
-    const text = res.content.filter((b) => b.type === "text").map((b) => b.text).join("");
-    if (!text) throw new Error("AI から空の返事が返ってきました");
-    return text;
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(describeError(res.status, data));
+
+    if (data.promptFeedback && data.promptFeedback.blockReason) throw new Error("AI に回答を断られました");
+    const cand = (data.candidates || [])[0];
+    if (!cand) throw new Error("AI から返事がありませんでした");
+    if (cand.finishReason === "SAFETY") throw new Error("AI に回答を断られました");
+    const out = ((cand.content && cand.content.parts) || []).map((p) => p.text || "").join("");
+    if (!out) throw new Error("AI から空の返事が返ってきました");
+    return out;
   }
 
-  function describeError(Anthropic, e) {
-    if (e instanceof Anthropic.AuthenticationError) return "API キーが正しくありません";
-    if (e instanceof Anthropic.PermissionDeniedError) return "この API キーではこのモデルを使えません";
-    if (e instanceof Anthropic.RateLimitError) return "混み合っています。少し待ってからもう一度";
-    if (e instanceof Anthropic.APIConnectionError) return "通信できませんでした";
-    if (e instanceof Anthropic.APIError) return `エラー（${e.status}）：${e.message}`;
-    return e.message || String(e);
+  function describeError(status, data) {
+    const err = data.error || {};
+    const reason = ((err.details || []).find((d) => d.reason) || {}).reason;
+    if (reason === "API_KEY_INVALID" || status === 401) return "API キーが正しくありません";
+    if (status === 403) return "この API キーでは使えません（キーの制限を確認してください）";
+    if (status === 429) return "無料枠の回数を使い切りました。時間をおくか、明日もう一度";
+    if (status >= 500) return "Gemini 側が混み合っています。少し待ってからもう一度";
+    return `エラー（${status}）：${err.message || "不明なエラー"}`;
   }
 
   /* 単語 → { pos, meaning, notes, examples:[{en, ja}] } */
   async function explain(word) {
-    const text = await call({
-      messages: [
-        {
-          role: "user",
-          content: `英単語：${word.word}\n単語帳に登録した日本語訳：${word.meaning}`,
-        },
-      ],
-      output_config: { format: { type: "json_schema", schema: SCHEMA } },
+    const text = await call(`英単語：${word.word}\n単語帳に登録した日本語訳：${word.meaning}`, {
+      responseMimeType: "application/json",
+      responseSchema: SCHEMA,
     });
     return JSON.parse(text);
   }
@@ -113,17 +96,17 @@
   async function ask(word, question) {
     const ai = word.ai || {};
     const past = (ai.qa || []).map((x) => `Q. ${x.q}\nA. ${x.a}`).join("\n\n");
-    const content = [
+    const text = [
       `英単語：${word.word}`,
       `単語帳に登録した日本語訳：${word.meaning}`,
       `これまでの解説：${JSON.stringify({ pos: ai.pos, meaning: ai.meaning, notes: ai.notes, examples: ai.examples })}`,
       past && `これまでの質問と回答：\n${past}`,
       `新しい質問：${question}`,
-      "質問に日本語で、短く分かりやすく答えてください。見出しや箇条書きの記号は使わず、普通の文章で。",
+      "質問に日本語で、短く分かりやすく答えてください。見出しや箇条書きの記号、太字の記号は使わず、普通の文章で。",
     ]
       .filter(Boolean)
       .join("\n\n");
-    return call({ messages: [{ role: "user", content }] });
+    return call(text);
   }
 
   window.DF = window.DF || {};

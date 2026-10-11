@@ -89,7 +89,7 @@
     if (!AI.hasKey()) {
       const box = el("section", "ex-box");
       box.append(el("h3", "ex-head", "APIキーが必要です"));
-      const p = el("p", "ex-text", "単語一覧の右上にある「APIキー」に、Anthropic の API キーを入れてください。キーはこのブラウザにだけ保存されます。");
+      const p = el("p", "ex-text", "単語一覧の右上にある「Gemini APIキー」に、Google AI Studio で作った API キーを入れてください。キーはこのブラウザにだけ保存されます。");
       box.append(p);
       body.append(box);
     } else if (!ai) {

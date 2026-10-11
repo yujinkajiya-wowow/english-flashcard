@@ -20,11 +20,13 @@ python3 -m http.server 8000   # → http://localhost:8000
 
 ## AI解説
 
-カード裏面の「AI解説」から、品詞・意味・注意点・例文を生成し、追加で質問もできる（Claude API）。
+カード裏面の「AI解説」から、品詞・意味・注意点・例文を生成し、追加で質問もできる（Gemini API の無料枠）。
 
-- 使うには、単語一覧の右上「APIキー」に Anthropic の API キーを入れる。キーはこのブラウザの localStorage にだけ保存され、JSON 書き出しにも含まれない
-- サーバーが無いので、ブラウザから直接 API を呼んでいる。自分専用のアプリとして使う前提（公開して他人に使わせるなら、キーを隠すためのサーバーを挟むこと）
-- 生成した解説は単語データに保存するので、同じ単語で何度も料金がかからない。単語一覧で英単語か訳を直すと作り直す
+- API キーは [Google AI Studio](https://aistudio.google.com/apikey) で作り、単語一覧の右上「Gemini APIキー」に入れる。キーはこのブラウザの localStorage にだけ保存され、JSON 書き出しにも含まれない
+- モデルは `gemini-flash-lite-latest`（無料枠の回数が多い）。変えるなら `js/ai.js` の `MODEL`
+- 無料枠では、送った内容が Google のサービス改善に使われることがある。単語と質問しか送らないので気にしなくていいが、個人情報は質問に書かないこと
+- サーバーが無いので、ブラウザから直接 API を呼んでいる。自分専用のアプリとして使う前提
+- 生成した解説は単語データに保存するので、同じ単語で何度も API を呼ばない。単語一覧で英単語か訳を直すと作り直す
 
 ## 構成
 
@@ -35,9 +37,8 @@ python3 -m http.server 8000   # → http://localhost:8000
 | `js/swipe.js` | wheel(deltaX) / ドラッグでのカード操作、離したら確定 |
 | `js/haptic.js` | `haptic()`。Web では効果音＋揺れ、`navigator.vibrate` 対応端末は振動、Tauri/Electron ではネイティブを呼ぶ |
 | `js/ipa.js` | 発音記号の取得と保存 |
-| `js/ai.js` | Claude API の呼び出し（解説の生成・追加の質問） |
+| `js/ai.js` | Gemini API の呼び出し（解説の生成・追加の質問） |
 | `js/explain.js` | AI解説パネルの表示 |
-| `vendor/anthropic-sdk-*.js` | Anthropic の TypeScript SDK をブラウザ用に1ファイルにまとめたもの（MIT） |
 | `js/app.js` | 画面（フラッシュ / 追加 / 一覧） |
 
 ## 仕様からの補足
