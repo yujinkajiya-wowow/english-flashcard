@@ -49,7 +49,6 @@
   }
 
   function newSession() {
-    Storage.saveSnapshotIfNone(TODAY);
     const { review, fresh } = Scheduler.buildToday(Storage.getWords(), TODAY);
     // 復習を先に、新規を後に（それぞれの中はシャッフル）
     const queue = shuffle(review).concat(shuffle(fresh));
@@ -199,7 +198,9 @@
 
   // 今日の回答をなかったことにして最初からやり直す（スケジュール・正答数も巻き戻る）
   $("res-again").addEventListener("click", () => {
-    Storage.restoreSnapshot(TODAY);
+    Storage.saveWords(Storage.getWords().map((w) => Scheduler.rewind(w, TODAY)));
+    Storage.setDay(TODAY, null);
+    Storage.clearSession();
     session = null;
     enterFlash();
   });

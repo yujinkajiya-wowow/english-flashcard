@@ -68,6 +68,20 @@
     return w;
   }
 
+  /*
+   * 開発用：その日の回答をなかったことにする。
+   * 履歴からその日の分を除いて、最初から apply し直す（履歴があれば状態は再現できる）
+   */
+  function rewind(word, date) {
+    const history = word.history || [];
+    if (!history.some((h) => h.date === date)) return word;
+    let w = Object.assign({}, word, {
+      introducedDate: null, stage: 0, nextReviewDate: null, mastered: false, history: [],
+    });
+    for (const h of history) if (h.date !== date) w = apply(w, h.result, h.date);
+    return w;
+  }
+
   /* 今日出す単語の id 一覧（復習 → 新規の順） */
   function buildToday(words, date) {
     const introducedToday = words.filter((w) => w.introducedDate === date).length;
@@ -105,6 +119,6 @@
 
   window.DF = window.DF || {};
   window.DF.Scheduler = {
-    OFFSETS, DAILY_NEW, today, addDays, apply, buildToday, dueCountOn, streak, stageLabel,
+    OFFSETS, DAILY_NEW, today, addDays, apply, rewind, buildToday, dueCountOn, streak, stageLabel,
   };
 })();

@@ -9,7 +9,6 @@
     session: "df.session",
     days: "df.days",
     settings: "df.settings",
-    snapshot: "df.snapshot",
   };
 
   function read(key, fallback) {
@@ -96,6 +95,9 @@
     },
 
     /* ---- その日のセッション（リロードしても続きから） ---- */
+    clearSession() {
+      write(KEY.session, null);
+    },
     getSession() {
       return read(KEY.session, null);
     },
@@ -119,24 +121,6 @@
       if (value) days[date] = value;
       else delete days[date];
       write(KEY.days, days);
-    },
-
-    /* ---- 開発用：その日の最初の状態を覚えておいて巻き戻す ---- */
-    saveSnapshotIfNone(date) {
-      const snap = read(KEY.snapshot, null);
-      if (snap && snap.date === date) return;
-      write(KEY.snapshot, { date, words: this.getWords(), day: this.getDays()[date] || null });
-    },
-    restoreSnapshot(date) {
-      const snap = read(KEY.snapshot, null);
-      if (!snap || snap.date !== date) return false;
-      // スナップショットの後に追加した単語は残す
-      const before = new Map(snap.words.map((w) => [w.id, w]));
-      const words = this.getWords().map((w) => before.get(w.id) || w);
-      this.saveWords(words);
-      this.setDay(date, snap.day);
-      write(KEY.session, null);
-      return true;
     },
 
     /* ---- 設定 ---- */
