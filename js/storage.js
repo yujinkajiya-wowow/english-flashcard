@@ -125,7 +125,7 @@
 
     /* ---- 設定 ---- */
     getSettings() {
-      return Object.assign({ sound: true, invert: false }, read(KEY.settings, {}));
+      return Object.assign({ sound: true, invert: false, apiKey: "" }, read(KEY.settings, {}));
     },
     saveSettings(patch) {
       const s = Object.assign(this.getSettings(), patch);
@@ -137,7 +137,7 @@
       return {
         words: this.getWords(),
         days: this.getDays(),
-        settings: this.getSettings(),
+        settings: Object.assign({}, this.getSettings(), { apiKey: undefined }), // キーは書き出さない
         exportedAt: new Date().toISOString(),
       };
     },

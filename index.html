@@ -35,6 +35,7 @@
           </div>
           <div class="face back">
             <div class="meaning ja" id="card-meaning"></div>
+            <button class="ai-btn" id="ai-btn" type="button">AI解説</button>
           </div>
         </div>
       </div>
@@ -53,6 +54,32 @@
       <button class="link dev" id="res-again" hidden>もう一度（開発用：今日の回答を巻き戻す）</button>
     </div>
   </section>
+
+  <!-- AI解説 -->
+  <div class="explain" id="explain" hidden>
+    <div class="ex-panel" role="dialog" aria-label="AI解説">
+      <header class="ex-title">
+        <span>AI解説</span>
+        <button class="ex-close" id="ex-close" type="button" aria-label="閉じる">×</button>
+      </header>
+      <div class="ex-scroll">
+        <section class="ex-box ex-top">
+          <div class="ex-word en" id="ex-word"></div>
+          <div class="ex-def">
+            <span class="ex-pos" id="ex-pos"></span>
+            <p class="ex-meaning" id="ex-meaning"></p>
+          </div>
+        </section>
+        <div id="ex-body"></div>
+      </div>
+      <form class="ex-ask" id="ex-form">
+        <input id="ex-question" placeholder="AIに追加で質問する" autocomplete="off">
+        <button class="ex-send" id="ex-send" aria-label="送信">
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M20.5 3.5 3.8 10.4c-.8.3-.7 1.4.1 1.7l6.3 1.7 1.7 6.3c.2.8 1.4.9 1.7.1L20.5 3.5Z" fill="currentColor"/></svg>
+        </button>
+      </form>
+    </div>
+  </div>
 
   <!-- 単語の追加 -->
   <section class="view narrow" id="view-add" hidden>
@@ -77,6 +104,7 @@
       <div class="list-tools">
         <label class="toggle"><input type="checkbox" id="opt-sound"> 効果音</label>
         <label class="toggle"><input type="checkbox" id="opt-invert"> スワイプ方向を反転</label>
+        <label class="toggle">Gemini APIキー <input type="password" id="opt-apikey" class="apikey" placeholder="キーを貼り付け" autocomplete="off"></label>
         <button class="link" id="export-json">JSONを書き出す</button>
       </div>
     </div>
@@ -92,6 +120,8 @@
   <script src="js/ipa.js"></script>
   <script src="js/haptic.js"></script>
   <script src="js/swipe.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/explain.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

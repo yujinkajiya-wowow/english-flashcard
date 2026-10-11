@@ -225,3 +225,86 @@ textarea { font-family: var(--font-en), var(--font-ja); font-weight: 400; resize
   .row { flex-wrap: wrap; }
   .words th:nth-child(4), .words td:nth-child(4) { display: none; }
 }
+
+/* ---------- AI解説 ---------- */
+.ai-btn {
+  position: absolute; right: 3cqw; bottom: 3cqw;
+  border: 0; border-radius: 999px; padding: 6px 14px;
+  background: #808080; color: #fff; cursor: pointer;
+  font-family: var(--font-ja); font-weight: 700; font-size: clamp(11px, 1.5cqw, 14px); letter-spacing: .08em;
+}
+.ai-btn:hover { background: #666; }
+
+.explain {
+  position: fixed; inset: 0; z-index: 20;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255, 255, 255, .6);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  animation: ex-fade .2s ease-out;
+}
+@keyframes ex-fade { from { opacity: 0; } }
+.ex-panel {
+  width: min(560px, 92vw); max-height: 90vh;
+  display: flex; flex-direction: column;
+  background: #f1f1f1; border: 2px solid #dcdcdc; border-radius: 30px; overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, .08);
+  font-family: var(--font-ja);
+  animation: ex-up .25s cubic-bezier(.2, .8, .3, 1);
+}
+@keyframes ex-up { from { transform: translateY(12px); opacity: 0; } }
+.ex-title {
+  display: flex; align-items: center; justify-content: space-between;
+  background: #808080; color: #fff; padding: 18px 26px;
+  font-weight: 700; font-size: 20px; letter-spacing: .12em;
+}
+.ex-close { border: 0; background: none; color: #fff; font-size: 22px; line-height: 1; cursor: pointer; padding: 0 4px; opacity: .8; }
+.ex-close:hover { opacity: 1; }
+.ex-scroll { overflow-y: auto; padding: 16px 16px 0; display: flex; flex-direction: column; gap: 14px; }
+#ex-body { display: flex; flex-direction: column; gap: 14px; }
+
+.ex-box { background: #fff; border-radius: 18px; overflow: hidden; }
+.ex-top { display: flex; align-items: stretch; }
+.ex-word {
+  flex: 1 1 50%; display: flex; align-items: center; padding: 22px 24px;
+  font-size: clamp(22px, 5vw, 30px); line-height: 1.1; overflow-wrap: anywhere;
+  border-right: 3px solid #f1f1f1;
+}
+.ex-def { flex: 1 1 50%; padding: 22px 20px; display: flex; flex-direction: column; justify-content: center; gap: 6px; }
+.ex-pos {
+  align-self: flex-start; background: #808080; color: #fff; border-radius: 8px;
+  padding: 2px 9px; font-size: 11px; font-weight: 700; letter-spacing: .06em;
+}
+.ex-meaning { margin: 0; font-size: 16px; font-weight: 400; line-height: 1.5; }
+
+.ex-head { margin: 0; padding: 12px 24px 8px; font-size: 16px; font-weight: 700; border-bottom: 3px solid #f1f1f1; }
+.ex-text { margin: 0; padding: 14px 24px 20px; font-size: 13px; line-height: 1.6; white-space: pre-wrap; }
+.ex-sub { color: var(--sub); }
+.ex-error { color: rgb(var(--ng)); padding-top: 0; }
+.ex-example { padding: 16px 24px; }
+.ex-example + .ex-example { border-top: 3px solid #f1f1f1; }
+.ex-en { margin: 0 0 8px; font-family: var(--font-en); font-weight: 700; font-size: 16px; line-height: 1.35; color: #f2a93b; }
+.ex-ja { margin: 0; font-weight: 700; font-size: 13px; line-height: 1.5; }
+.ex-qa + .ex-qa { border-top: 3px solid #f1f1f1; }
+.ex-q { margin: 0; padding: 14px 24px 0; font-size: 13px; font-weight: 700; }
+.ex-retry {
+  margin: 0 24px 20px; border: 0; border-radius: 999px; padding: 8px 18px;
+  background: var(--fg); color: #fff; font-weight: 700; cursor: pointer;
+}
+
+.ex-ask {
+  display: flex; align-items: center; gap: 8px;
+  margin: 14px 16px 16px; padding: 6px 6px 6px 22px;
+  background: #fff; border: 1.5px solid #8a8a8a; border-radius: 999px;
+}
+.ex-ask input {
+  flex: 1; border: 0; padding: 8px 0; background: none; outline: none;
+  font-family: var(--font-ja); font-weight: 700; font-size: 15px;
+}
+.ex-ask input::placeholder { color: #bdbdbd; }
+.ex-send {
+  flex: none; width: 40px; height: 40px; border: 0; border-radius: 50%;
+  display: grid; place-items: center; background: #222; color: #fff; cursor: pointer;
+}
+.ex-send:disabled, .ex-ask input:disabled { opacity: .4; cursor: default; }
+.ex-send svg { transform: translateX(-1px); }
+.apikey { width: 140px; padding: 4px 8px; font-size: 12px; }
