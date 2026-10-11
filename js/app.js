@@ -3,9 +3,8 @@
   const $ = (id) => document.getElementById(id);
   const TODAY = Scheduler.today();
   const LOCK_AFTER_COMMIT = 500;
-  // 開発中（localhost / file:// / ?dev）だけ「もう一度」ボタンを出す
-  const DEV =
-    ["localhost", "127.0.0.1", ""].includes(location.hostname) || new URLSearchParams(location.search).has("dev");
+  // 開発中は結果画面に「もう一度」ボタンを出す。本番公開するときは false にする
+  const DEV = true;
 
   Storage.seedIfEmpty(TODAY);
 

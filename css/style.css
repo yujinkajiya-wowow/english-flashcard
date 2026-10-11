@@ -1,10 +1,14 @@
 /* ---------- フォント ----------
-   Degular は /fonts/ に自分のファイルを置く。無ければ Inter → system-ui に落ちる。 */
+   Degular は Mac にインストールしてあればそれを使う（local）。GitHub Pages ではこれが本命。
+   無ければ /fonts/ に置いたファイル、それも無ければ Inter → system-ui に落ちる。 */
 @font-face {
   font-family: "Degular";
   font-weight: 700 900;
   font-display: swap;
-  src: url("../fonts/Degular-Bold.woff2") format("woff2"),
+  src: local("Degular Bold"), local("Degular-Bold"),
+       local("Degular Demo Bold"), local("DegularDemo-Bold"),
+       local("Degular Demo Black"), local("DegularDemo-Black"),
+       url("../fonts/Degular-Bold.woff2") format("woff2"),
        url("../fonts/Degular-Bold.woff") format("woff"),
        url("../fonts/Degular-Bold.otf") format("opentype"),
        url("../fonts/DegularDemo-Bold.otf") format("opentype"),
@@ -16,7 +20,9 @@
   font-family: "Degular";
   font-weight: 400;
   font-display: swap;
-  src: url("../fonts/Degular-Regular.woff2") format("woff2"),
+  src: local("Degular Regular"), local("Degular-Regular"),
+       local("Degular Demo Regular"), local("DegularDemo-Regular"),
+       url("../fonts/Degular-Regular.woff2") format("woff2"),
        url("../fonts/Degular-Regular.otf") format("opentype"),
        url("../fonts/DegularDemo-Regular.otf") format("opentype");
 }
