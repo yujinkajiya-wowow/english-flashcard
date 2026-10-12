@@ -9,6 +9,7 @@
     session: "df.session",
     days: "df.days",
     settings: "df.settings",
+    tests: "df.tests",
   };
 
   function read(key, fallback) {
@@ -123,6 +124,16 @@
       write(KEY.days, days);
     },
 
+    /* ---- テストの記録 [{ date, correct, total, byType: { write|choice|translate: {correct, total} }, retried }] ---- */
+    getTests() {
+      return read(KEY.tests, []);
+    },
+    addTest(result) {
+      const tests = this.getTests().concat(result).slice(-100);
+      write(KEY.tests, tests);
+      return tests;
+    },
+
     /* ---- 設定 ---- */
     getSettings() {
       return Object.assign({ sound: true, invert: false, apiKey: "" }, read(KEY.settings, {}));
@@ -137,6 +148,7 @@
       return {
         words: this.getWords(),
         days: this.getDays(),
+        tests: this.getTests(),
         settings: Object.assign({}, this.getSettings(), { apiKey: undefined }), // キーは書き出さない
         exportedAt: new Date().toISOString(),
       };

@@ -120,13 +120,48 @@
       <p class="hint" id="t-hint"></p>
     </div>
 
-    <div class="result" id="t-result" hidden>
-      <h1 class="ja">テスト終了</h1>
-      <dl class="stats">
-        <div><dt>正答</dt><dd id="t-score">0</dd></div>
-      </dl>
-      <ul class="t-missed" id="t-missed"></ul>
+    <div class="result summary" id="t-result" hidden>
+      <h1 class="ja" id="t-title">テスト終了</h1>
       <p class="sub" id="t-note"></p>
+
+      <div class="sum-row" id="t-row-score">
+        <div class="ring-box" id="t-score-ring">
+          <div class="ring-label">
+            <span class="ring-cap ja sum-green">スコア</span>
+            <span class="ring-num en sum-green" id="t-score">0</span>
+            <span class="ring-sub en sum-green" id="t-score-frac"></span>
+          </div>
+        </div>
+        <div class="sum-side">
+          <h2 class="sum-head ja">間違えた単語</h2>
+          <ul class="sum-missed t-missed" id="t-missed"></ul>
+        </div>
+      </div>
+
+      <div class="sum-row" id="t-row-types">
+        <div class="ring-box" id="t-type-ring">
+          <div class="ring-label">
+            <span class="ring-cap ja sum-dark">形式別</span>
+          </div>
+        </div>
+        <div class="sum-side">
+          <ul class="t-types" id="t-types"></ul>
+        </div>
+      </div>
+
+      <div class="sum-row" id="t-row-history">
+        <div class="ring-box streak-badge">
+          <div class="ring-label">
+            <span class="ring-cap ja">ベスト</span>
+            <span class="ring-num en" id="t-best">0</span>
+          </div>
+        </div>
+        <div class="sum-side">
+          <div class="sum-compare ja" id="t-compare"></div>
+          <div class="t-history" id="t-history"></div>
+        </div>
+      </div>
+
       <button class="btn" id="t-again">もう一度テストする</button>
     </div>
   </section>

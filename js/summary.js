@@ -47,14 +47,15 @@
   }
 
   /* ---------- 輪 ---------- */
-  // segments: [{ from: 0..1, to: 0..1, color }]。12時から時計回り。後ろのものほど上に重なる
+  // segments: [{ from: 0..1, to: 0..1, color, r?, width? }]。12時から時計回り。後ろのものほど上に重なる
+  // r を変えれば同心円（テストの形式別）も描ける
   function ring(box, segments) {
     box.querySelector("svg")?.remove();
-    const r = 44, c = 2 * Math.PI * r;
     const svg = document.createElementNS(SVG, "svg");
     svg.setAttribute("viewBox", "0 0 100 100");
     svg.classList.add("ring");
     for (const seg of segments) {
+      const r = seg.r || 44, c = 2 * Math.PI * r;
       const len = Math.max(0, Math.min(1, seg.to) - seg.from);
       if (len <= 0) continue;
       const circle = document.createElementNS(SVG, "circle");
@@ -62,6 +63,7 @@
       circle.setAttribute("cy", 50);
       circle.setAttribute("r", r);
       circle.setAttribute("stroke", seg.color);
+      if (seg.width) circle.style.strokeWidth = seg.width;
       circle.setAttribute("transform", `rotate(${-90 + seg.from * 360} 50 50)`);
       if (seg.round) circle.setAttribute("stroke-linecap", "round");
       // 出てくるときに伸びるアニメーション
@@ -146,5 +148,5 @@
     }
   }
 
-  window.DF.Summary = { render };
+  window.DF.Summary = { render, ring };
 })();
