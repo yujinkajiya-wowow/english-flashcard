@@ -177,20 +177,14 @@
     $("result").hidden = false;
     swipe.reset();
     wrap.style.transform = "";
-    const words = Storage.getWords();
-    const days = Storage.getDays();
-    const day = days[TODAY] || { correct: 0, total: 0 };
-    $("res-correct").textContent = day.total ? `${day.correct}/${day.total}` : "0";
-    $("res-tomorrow").textContent = Scheduler.dueCountOn(words, Scheduler.addDays(TODAY, 1));
-    $("res-streak").textContent = Scheduler.streak(days, TODAY);
+    const day = Storage.getDays()[TODAY] || { correct: 0, total: 0 };
+    window.DF.Summary.render(TODAY);
     $("remaining-count").textContent = 0;
     $("session-progress").style.width = "100%";
     const more = hasMoreToday();
     $("res-more").hidden = !more;
     $("res-again").hidden = !DEV;
-    $("res-note").textContent = day.total
-      ? "正答は各単語の1回目の回答で数えています"
-      : "今日出題する単語はありません。単語を追加してください";
+    $("res-note").textContent = day.total ? "" : "今日出題する単語はありません。単語を追加してください";
   }
 
   $("res-more").addEventListener("click", () => {

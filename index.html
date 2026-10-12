@@ -43,13 +43,45 @@
       <p class="hint" id="hint">クリック / スペースで裏返す　大きく←で覚えた　大きく→でまだ</p>
     </div>
 
-    <div class="result" id="result" hidden>
-      <h1 class="ja">おつかれさま</h1>
-      <dl class="stats">
-        <div><dt>今日の正答</dt><dd id="res-correct">0</dd></div>
-        <div><dt>明日の復習予定</dt><dd id="res-tomorrow">0</dd></div>
-        <div><dt>連続日数</dt><dd id="res-streak">0</dd></div>
-      </dl>
+    <div class="result summary" id="result" hidden>
+      <h1 class="ja">おつかれ</h1>
+
+      <div class="sum-row">
+        <div class="ring-box" id="sum-acc-ring">
+          <div class="ring-label">
+            <span class="ring-cap ja sum-green">正答率</span>
+            <span class="ring-num en sum-green" id="sum-acc">0</span>
+          </div>
+        </div>
+        <div class="sum-side">
+          <h2 class="sum-head ja">一度間違えた単語</h2>
+          <ul class="sum-missed" id="sum-missed"></ul>
+        </div>
+      </div>
+
+      <div class="sum-row">
+        <div class="ring-box streak-badge">
+          <div class="ring-label">
+            <span class="ring-cap ja">連続記録</span>
+            <span class="ring-num ja"><span class="en" id="sum-streak">0</span>日</span>
+          </div>
+        </div>
+        <div class="sum-side">
+          <h2 class="sum-month en" id="sum-month"></h2>
+          <div class="sum-week" id="sum-week"></div>
+        </div>
+      </div>
+
+      <div class="sum-row">
+        <div class="ring-box" id="sum-week-ring">
+          <div class="ring-label">
+            <span class="ring-cap ja sum-dark">今週</span>
+            <span class="ring-num en sum-dark" id="sum-week-count">0</span>
+          </div>
+        </div>
+        <div class="sum-side sum-compare ja" id="sum-compare"></div>
+      </div>
+
       <p class="sub" id="res-note"></p>
       <button class="btn" id="res-more" hidden>続けて出題する</button>
       <button class="link dev" id="res-again" hidden>もう一度（開発用：今日の回答を巻き戻す）</button>
@@ -167,6 +199,7 @@
   <script src="js/ai.js"></script>
   <script src="js/explain.js"></script>
   <script src="js/test.js"></script>
+  <script src="js/summary.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
