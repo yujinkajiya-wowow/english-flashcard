@@ -432,7 +432,8 @@ div.t-sentence { display: flex; align-items: center; min-height: 7cqw; padding-t
 /* ---------- 結果画面（テスト） ---------- */
 #t-note:empty { display: none; }
 .ring-sub { font-size: 13px; margin-top: 4px; opacity: .8; }
-.t-missed li { grid-template-columns: 1fr 1fr auto; align-items: center; }
+.t-missed li { grid-template-columns: 1fr 1fr 104px; align-items: center; }
+.t-missed .t-tag { justify-self: end; }
 .t-tag {
   font-size: 10px; font-weight: 700; color: #fff; background: #b4b4b4;
   border-radius: 6px; padding: 2px 7px; letter-spacing: .04em;
@@ -448,6 +449,11 @@ div.t-sentence { display: flex; align-items: center; min-height: 7cqw; padding-t
 .t-dot { width: 12px; height: 12px; border-radius: 50%; }
 .t-type-num { color: var(--sub); font-size: 13px; }
 .t-type-pct { text-align: right; font-size: 20px; }
+.t-cap-dot {
+  display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--sum-dark); margin-right: 4px; vertical-align: 2px;
+}
+.t-tag.is-retried { background: #d4d4d4; color: #6b6b6b; }
 .t-retried { padding: 10px 16px 0; color: var(--sub); font-size: 12px; }
 
 .t-newbest {

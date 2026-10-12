@@ -300,8 +300,9 @@
   function record(ok) {
     haptic(ok ? "ok" : "ng");
     const item = test.items[test.index];
-    // retried：文章翻訳で一度保留になってから直して正解した
-    test.results.push({ id: item.id, ok, type: item.type, retried: ok && (item.tries || 0) > 1 });
+    // 正答率に入るのは1回目で正解したときだけ。保留から直して正解したものは retried として別に数える
+    const retried = ok && (item.tries || 0) > 1;
+    test.results.push({ id: item.id, ok: ok && !retried, type: item.type, retried });
   }
 
   function judge(ok) {
@@ -401,7 +402,8 @@
       const w = Storage.getWord(r.id);
       if (!w) continue;
       const li = el("li");
-      li.append(el("span", "en", w.word), el("span", "ja", w.meaning), el("span", "t-tag ja", TYPE_LABEL[r.type] || ""));
+      const tag = (TYPE_LABEL[r.type] || "") + (r.retried ? "・直して正解" : "");
+      li.append(el("span", "en", w.word), el("span", "ja", w.meaning), el("span", "t-tag ja" + (r.retried ? " is-retried" : ""), tag));
       ul.append(li);
     }
 
@@ -425,7 +427,7 @@
       }
       list.append(li);
     }
-    if (sum.retried) list.append(el("li", "t-retried ja", `文章翻訳を直して正解：${sum.retried}問`));
+    if (sum.retried) list.append(el("li", "t-retried ja", `文章翻訳を直して正解：${sum.retried}問（正答率には入りません）`));
     ring($("t-type-ring"), segs);
 
     // 3. ベストと前回比較、最近のスコア
