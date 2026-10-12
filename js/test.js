@@ -299,7 +299,9 @@
 
   function record(ok) {
     haptic(ok ? "ok" : "ng");
-    test.results.push({ id: test.items[test.index].id, ok });
+    const item = test.items[test.index];
+    // retried：文章翻訳で一度保留になってから直して正解した
+    test.results.push({ id: item.id, ok, type: item.type, retried: ok && (item.tries || 0) > 1 });
   }
 
   function judge(ok) {
@@ -331,31 +333,126 @@
     $("t-glow-right").style.opacity = dir === "right" ? 0.55 : 0;
   }
 
+  /* ---------- 結果画面 ---------- */
+  const TYPES = [
+    { key: "write", label: "単語記述", color: "var(--sum-orange-deep)", r: 44 },
+    { key: "choice", label: "単語選択", color: "var(--sum-yellow)", r: 32 },
+    { key: "translate", label: "文章翻訳", color: "var(--sum-dark)", r: 20 },
+  ];
+  const TYPE_LABEL = { write: "記述", choice: "選択", translate: "翻訳" };
+
+  function el(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  function summarize(results) {
+    const byType = {};
+    for (const t of TYPES) {
+      const rs = results.filter((r) => r.type === t.key);
+      byType[t.key] = { correct: rs.filter((r) => r.ok).length, total: rs.length };
+    }
+    return {
+      date: Scheduler.today(),
+      correct: results.filter((r) => r.ok).length,
+      total: results.length,
+      byType,
+      retried: results.filter((r) => r.retried).length,
+    };
+  }
+
   function showResult() {
     $("t-stage").hidden = true;
     $("t-result").hidden = false;
     glow(null);
-    const total = test.results.length;
-    const correct = test.results.filter((r) => r.ok).length;
     $("t-remaining").textContent = 0;
     $("t-progress").style.width = "100%";
-    $("t-score").textContent = total ? `${correct}/${total}` : "0";
+
+    const empty = !test.items.length;
+    for (const id of ["t-row-score", "t-row-types", "t-row-history", "t-again"]) $(id).hidden = empty;
+    $("t-note").textContent = empty ? "今日の単語がまだありません。デイリーフラッシュをやってから来てね" : "";
+    if (empty) return;
+
+    const sum = summarize(test.results);
+    // 記録は1回のテストにつき1回だけ
+    let tests = Storage.getTests();
+    if (!test.saved) {
+      tests = Storage.addTest(sum);
+      test.saved = true;
+    }
+    const pct = sum.total ? Math.round((sum.correct / sum.total) * 100) : 0;
+    const { ring } = window.DF.Summary;
+
+    // 1. スコア
+    $("t-title").textContent = pct === 100 ? "パーフェクト" : pct >= 80 ? "おみごと" : "テスト終了";
+    $("t-score").textContent = pct;
+    $("t-score-frac").textContent = `${sum.correct}/${sum.total}`;
+    ring($("t-score-ring"), [
+      { from: 0, to: 1, color: "var(--sum-track)" },
+      { from: 0, to: pct / 100, color: "var(--sum-green)", round: true, grow: true },
+    ]);
     const ul = $("t-missed");
     ul.innerHTML = "";
-    for (const r of test.results.filter((r) => !r.ok)) {
+    const missed = test.results.filter((r) => !r.ok);
+    if (!missed.length) ul.append(el("li", "sum-none", "なし。全問正解"));
+    for (const r of missed) {
       const w = Storage.getWord(r.id);
       if (!w) continue;
-      const li = document.createElement("li");
-      li.append(Object.assign(document.createElement("span"), { className: "en", textContent: w.word }));
-      li.append(Object.assign(document.createElement("span"), { className: "ja", textContent: w.meaning }));
-      ul.appendChild(li);
+      const li = el("li");
+      li.append(el("span", "en", w.word), el("span", "ja", w.meaning), el("span", "t-tag ja", TYPE_LABEL[r.type] || ""));
+      ul.append(li);
     }
-    $("t-note").textContent = !test.items.length
-      ? "今日の単語がまだありません"
-      : total === correct
-        ? "全問正解"
-        : "間違えた単語";
-    $("t-again").hidden = !test.items.length;
+
+    // 2. 形式別：同心円。外から記述・選択・翻訳。出題が無かった形式は輪を出さない
+    const segs = [];
+    const list = $("t-types");
+    list.innerHTML = "";
+    for (const t of TYPES) {
+      const s = sum.byType[t.key];
+      const li = el("li", "t-type" + (s.total ? "" : " is-none"));
+      const dot = el("span", "t-dot");
+      dot.style.background = t.color;
+      li.append(dot, el("span", "t-type-name ja", t.label));
+      if (s.total) {
+        const p = Math.round((s.correct / s.total) * 100);
+        li.append(el("span", "t-type-num en", `${s.correct}/${s.total}`), el("span", "t-type-pct en", `${p}%`));
+        segs.push({ from: 0, to: 1, color: "var(--sum-track-light)", r: t.r, width: 8 });
+        segs.push({ from: 0, to: s.correct / s.total, color: t.color, r: t.r, width: 8, round: true, grow: true });
+      } else {
+        li.append(el("span", "t-type-num ja", "出題なし"));
+      }
+      list.append(li);
+    }
+    if (sum.retried) list.append(el("li", "t-retried ja", `文章翻訳を直して正解：${sum.retried}問`));
+    ring($("t-type-ring"), segs);
+
+    // 3. ベストと前回比較、最近のスコア
+    const scores = tests.filter((t) => t.total).map((t) => ({ date: t.date, pct: Math.round((t.correct / t.total) * 100) }));
+    $("t-best").textContent = Math.max(...scores.map((x) => x.pct));
+    const cmp = $("t-compare");
+    cmp.innerHTML = "";
+    const prev = scores.length >= 2 ? scores[scores.length - 2].pct : null;
+    if (prev === null) cmp.append("記念すべき1回目のテスト");
+    else if (pct === prev) cmp.append("前回と同じスコア");
+    else cmp.append("前回よりも", el("span", "sum-big en", Math.abs(pct - prev)), pct > prev ? "ポイントアップ！" : "ポイントダウン");
+    if (scores.length >= 2 && pct === Math.max(...scores.map((x) => x.pct)) && pct > Math.max(...scores.slice(0, -1).map((x) => x.pct))) {
+      cmp.append(el("span", "t-newbest ja", "ベスト更新"));
+    }
+
+    const hist = $("t-history");
+    hist.innerHTML = "";
+    const recent = scores.slice(-7);
+    recent.forEach((x, i) => {
+      const col = el("div", "t-bar" + (i === recent.length - 1 ? " is-now" : ""));
+      const bar = el("div", "t-bar-fill");
+      bar.style.setProperty("--h", Math.max(4, x.pct) + "%");
+      const [, m, d] = x.date.split("-").map(Number);
+      col.append(el("span", "t-bar-pct en", x.pct), el("div", "t-bar-track"), el("span", "t-bar-date en", `${m}/${d}`));
+      col.children[1].append(bar);
+      hist.append(col);
+    });
   }
 
   $("t-write").addEventListener("submit", (e) => {
