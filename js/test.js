@@ -6,6 +6,8 @@
  *             API キーが無いときは出題しない
  * 正解はカードが左へ、不正解は右へ飛ぶ（フラッシュカードと同じ）。
  * 文章翻訳だけは、コメントを読めるように Enter を押すまで飛ばさない。
+ * さらに不正解のときは「保留」になり、解答を直して Enter で採点し直せる（そのまま Enter で不正解のまま次へ）。
+ * テストの結果は最後の採点で決まる。
  * 結果は復習スケジュールには反映しない。
  */
 (function () {
@@ -133,6 +135,7 @@
     const input = $("t-sinput");
     input.value = "";
     input.hidden = false;
+    input.classList.remove("is-ng");
     input.disabled = true;
     $("t-sview").hidden = true;
     $("t-comment").textContent = "";
@@ -177,12 +180,21 @@
   async function submitTranslate() {
     const item = test.items[test.index];
     if (busy) return;
-    if (item.graded) return fly(item.graded.correct ? "left" : "right");
     const input = $("t-sinput");
+    if (item.graded && item.graded.correct) return fly("left");
     const answer = input.value.trim();
     if (!answer) return;
+    // 保留中に直さず Enter → 不正解で確定
+    if (item.graded && answer === item.lastAnswer) {
+      record(false);
+      glow("right");
+      return fly("right");
+    }
+
     busy = true;
     input.disabled = true;
+    input.classList.remove("is-ng");
+    $("t-comment").textContent = "";
     status("AI採点中…");
     let g;
     try {
@@ -196,34 +208,47 @@
     if (test.items[test.index] !== item) return;
     status("");
     item.graded = g;
-    item.chat = {
+    item.lastAnswer = answer;
+    item.tries = (item.tries || 0) + 1;
+    // チャットの前提は最新の採点に差し替える。質疑の履歴は残す
+    item.chat = Object.assign(item.chat || {}, {
       context: [
         "英語の文章翻訳テストの1問について、学習者が質問します。",
         `テストしている英単語：${Storage.getWord(item.id).word}`,
         `問題（日本語）：${item.ex.ja}`,
         `模範解答の一例：${item.ex.en}`,
-        `学習者の解答：${answer}`,
+        `学習者の解答（${item.tries}回目）：${answer}`,
         `採点：${g.correct ? "正解" : "不正解"}（スペルを直した解答：${g.corrected}）`,
         `採点コメント：${g.comment}`,
       ].join("\n"),
-    };
+    });
+    $("t-comment").textContent = g.comment;
+    $("t-ai-btn").hidden = false;
+    busy = false;
 
-    // 入力欄を、スペルを直した文に置き換える。直した文字だけ薄く塗る
+    if (!g.correct) {
+      // 保留：入力欄はそのまま。直して Enter で採点し直し
+      haptic("ng");
+      input.disabled = false;
+      input.classList.add("is-ng");
+      input.focus();
+      input.setSelectionRange(input.value.length, input.value.length);
+      $("t-hint").textContent = "直して Enter で採点し直す　そのまま Enter で次へ";
+      return;
+    }
+
+    // 正解：入力欄を、スペルを直した文に置き換える。直した文字だけ薄く塗る
     const view = $("t-sview");
     view.innerHTML = "";
     for (const [text, changed] of diff(answer, g.corrected || answer)) {
       view.append(changed ? Object.assign(document.createElement("mark"), { textContent: text }) : text);
     }
-    view.className = "t-input t-sentence en " + (g.correct ? "is-ok" : "is-ng");
+    view.className = "t-input t-sentence en is-ok";
     view.hidden = false;
     input.hidden = true;
-    $("t-comment").textContent = g.comment;
-    $("t-ai-btn").hidden = false;
     $("t-hint").textContent = "Enter で次へ";
-
-    record(g.correct);
-    glow(g.correct ? "left" : "right");
-    busy = false;
+    record(true);
+    glow("left");
   }
 
   /* after のうち before に無い部分に印を付ける（文字単位の LCS）→ [[文字列, 変更か], ...] */
@@ -341,6 +366,8 @@
     e.preventDefault();
     submitTranslate();
   });
+  // 保留中に直し始めたら赤を消す
+  $("t-sinput").addEventListener("input", (e) => e.target.classList.remove("is-ng"));
   $("t-ai-btn").addEventListener("click", () => {
     const item = test && test.items[test.index];
     if (item && item.chat) Explain.openChat(item.chat);
@@ -356,8 +383,8 @@
   window.addEventListener("keydown", (e) => {
     if ($("view-test").hidden || $("t-stage").hidden || busy || !test || Explain.isOpen()) return;
     const item = test.items[test.index];
-    // 採点後は入力欄が無いので、Enter はここで受けて次へ
-    if (item && item.graded && e.key === "Enter") {
+    // 正解後は入力欄が無いので、Enter はここで受けて次へ。保留中は入力欄の外で押されたときだけ
+    if (item && item.graded && e.key === "Enter" && e.target !== $("t-sinput")) {
       e.preventDefault();
       return submitTranslate();
     }
