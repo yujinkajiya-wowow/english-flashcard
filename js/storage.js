@@ -78,7 +78,7 @@
           nextReviewDate: null,   // null は「新規の待ち行列」にいる
           mastered: false,
           ipaStatus: "pending",   // pending | ok | none | manual
-          history: [],            // { date, result: "ok"|"ng", stage }
+          history: [],            // { date, result: "ok"|"ng"|"new"（初出題）, stage }
         };
         words.push(w);
         added.push(w);

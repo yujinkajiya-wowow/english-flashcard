@@ -56,6 +56,7 @@
   --line: #e6e6e6;
   --ok: 46, 170, 90;    /* 緑 (rgb) */
   --ng: 224, 64, 64;    /* 赤 (rgb) */
+  --new: 118, 102, 214; /* 紫：初めて出てくる単語 (rgb) */
 }
 
 * { box-sizing: border-box; }
@@ -480,3 +481,40 @@ div.t-sentence { display: flex; align-items: center; min-height: 7cqw; padding-t
 .add-entry input:focus { background: #f6f6f6; }
 .add-entry input::placeholder { color: #c4c4c4; font-weight: 700; }
 .add-msg { margin: 10px 4px 0; min-height: 1.4em; color: var(--sub); font-size: 12px; }
+
+/* ---------- 初めて出てくる単語 ----------
+   打った文字だけ黒くなる。スワイプはどちらの向きでも紫 */
+.word .ghost { color: #c9c9c9; }
+.word.typing .typed { color: var(--fg); }
+.word.miss { animation: miss .22s ease-out; }
+@keyframes miss { 25% { transform: translateX(-5px); } 60% { transform: translateX(4px); } }
+.word.done { animation: typed-pop .3s ease-out; }
+@keyframes typed-pop { 40% { transform: scale(1.04); } }
+#view-flash.is-new .glow-left {
+  background: linear-gradient(to right,
+    rgba(var(--new), 0.280) 0%,
+    rgba(var(--new), 0.213) 10%,
+    rgba(var(--new), 0.157) 20%,
+    rgba(var(--new), 0.111) 30%,
+    rgba(var(--new), 0.074) 40%,
+    rgba(var(--new), 0.046) 50%,
+    rgba(var(--new), 0.026) 60%,
+    rgba(var(--new), 0.012) 70%,
+    rgba(var(--new), 0.004) 80%,
+    rgba(var(--new), 0.001) 90%,
+    rgba(var(--new), 0.000) 100%);
+}
+#view-flash.is-new .glow-right {
+  background: linear-gradient(to left,
+    rgba(var(--new), 0.280) 0%,
+    rgba(var(--new), 0.213) 10%,
+    rgba(var(--new), 0.157) 20%,
+    rgba(var(--new), 0.111) 30%,
+    rgba(var(--new), 0.074) 40%,
+    rgba(var(--new), 0.046) 50%,
+    rgba(var(--new), 0.026) 60%,
+    rgba(var(--new), 0.012) 70%,
+    rgba(var(--new), 0.004) 80%,
+    rgba(var(--new), 0.001) 90%,
+    rgba(var(--new), 0.000) 100%);
+}
