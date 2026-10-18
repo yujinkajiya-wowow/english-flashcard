@@ -114,7 +114,11 @@
     void card.offsetWidth;
     card.style.transition = "";
 
-    $("card-word").textContent = w.word;
+    // 初めて出てくる単語は、自分で打ってなぞる。スワイプはどちらでも紫
+    const isNew = !w.introducedDate;
+    $("view-flash").classList.toggle("is-new", isNew);
+    typing = isNew ? { word: w.word, pos: skipSymbols(w.word, 0), done: false } : null;
+    renderWord(w.word);
     $("card-ipa").textContent = w.ipa || "";
     $("card-meaning").textContent = w.meaning;
     swipe.reset();
@@ -127,6 +131,65 @@
     updateProgress();
   }
 
+  /* ---------- 新しい単語のタイピング ----------
+     打った文字だけ黒くなる。英数字以外（空白・ハイフン・アポストロフィ）は打たなくていい */
+  let typing = null;
+  const isTypable = (ch) => /[a-z0-9]/i.test(ch);
+  function skipSymbols(word, pos) {
+    while (pos < word.length && !isTypable(word[pos])) pos++;
+    return pos;
+  }
+
+  function renderWord(word) {
+    const el = $("card-word");
+    el.classList.toggle("typing", !!typing && !typing.done);
+    if (!typing) return (el.textContent = word);
+    el.innerHTML = "";
+    const typed = document.createElement("span");
+    typed.className = "typed";
+    typed.textContent = word.slice(0, typing.pos);
+    const rest = document.createElement("span");
+    rest.className = "ghost";
+    rest.textContent = word.slice(typing.pos);
+    el.append(typed, rest);
+  }
+
+  function typeKey(e) {
+    if (!typing || typing.done || card.classList.contains("flipped")) return false;
+    if (e.metaKey || e.ctrlKey || e.altKey) return false;
+    const { word } = typing;
+    if (e.key === "Backspace") {
+      let pos = typing.pos;
+      while (pos > 0 && !isTypable(word[pos - 1])) pos--;
+      typing.pos = Math.max(0, pos - 1);
+      renderWord(word);
+      return true;
+    }
+    if (e.key.length !== 1 || !isTypable(e.key)) return false;
+    if (e.key.toLowerCase() === word[typing.pos].toLowerCase()) {
+      typing.pos = skipSymbols(word, typing.pos + 1);
+      if (typing.pos >= word.length) {
+        typing.done = true;
+        haptic("tick");
+        const el = $("card-word");
+        el.classList.remove("done");
+        void el.offsetWidth;
+        el.classList.add("done");
+        // 打ち終わったら少し置いて意味を見せる
+        setTimeout(() => {
+          if (typing && typing.done && !card.classList.contains("flipped")) flip();
+        }, 450);
+      }
+    } else {
+      const el = $("card-word");
+      el.classList.remove("miss");
+      void el.offsetWidth;
+      el.classList.add("miss");
+    }
+    renderWord(word);
+    return true;
+  }
+
   function flip() {
     if (busy || !session || !session.queue.length) return;
     card.classList.toggle("flipped");
@@ -137,9 +200,10 @@
     busy = true;
     swipe.cancel();
     swipe.lock(60_000);
-    // 左 = 覚えている / 右 = 覚えていない
-    const result = dir === "left" ? "ok" : "ng";
-    haptic(result);
+    // 左 = 覚えている / 右 = 覚えていない。初めて出てきた単語はどちらでも "new"（判定しない）
+    const result = typing ? "new" : dir === "left" ? "ok" : "ng";
+    haptic(result === "ng" ? "ng" : "ok");
+    typing = null;
 
     const id = session.queue.shift();
     if (!(id in session.first)) {
@@ -221,6 +285,10 @@
   window.addEventListener("keydown", (e) => {
     if (route !== "flash" || $("stage").hidden || Explain.isOpen()) return;
     if (e.target.matches("input, textarea")) return;
+    if (typeKey(e)) {
+      e.preventDefault();
+      return;
+    }
     if (e.code === "Space") {
       e.preventDefault();
       flip();

@@ -27,14 +27,15 @@
   function collect(today) {
     const words = Storage.getWords();
     const days = Storage.getDays();
+    // 初めて出てきた単語（"new"）は判定していないので正答率に入れない
     const todays = words
       .map((w) => ({ w, h: (w.history || []).find((h) => h.date === today) }))
-      .filter((x) => x.h);
+      .filter((x) => x.h && x.h.result !== "new");
     const correct = todays.filter((x) => x.h.result === "ok").length;
     const mon = mondayOf(today);
     const lastMon = Scheduler.addDays(mon, -7);
     return {
-      accuracy: todays.length ? Math.round((correct / todays.length) * 100) : 0,
+      accuracy: todays.length ? Math.round((correct / todays.length) * 100) : null, // null：判定した単語が無い（初日など）
       missed: todays.filter((x) => x.h.result !== "ok").map((x) => x.w),
       streak: Scheduler.streak(days, today),
       week: Array.from({ length: 7 }, (_, i) => {
@@ -88,10 +89,10 @@
     const d = collect(today);
 
     // 正答率
-    $("sum-acc").textContent = d.accuracy;
+    $("sum-acc").textContent = d.accuracy === null ? "−" : d.accuracy;
     ring($("sum-acc-ring"), [
       { from: 0, to: 1, color: "var(--sum-track)" },
-      { from: 0, to: d.accuracy / 100, color: "var(--sum-green)", round: true, grow: true },
+      { from: 0, to: (d.accuracy || 0) / 100, color: "var(--sum-green)", round: true, grow: true },
     ]);
     const ul = $("sum-missed");
     ul.innerHTML = "";
