@@ -469,18 +469,23 @@ div.t-sentence { display: flex; align-items: center; min-height: 7cqw; padding-t
 .add-head, .add-rows li, .add-entry { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .add-head { padding: 0 0 8px; color: var(--sub); font-size: 12px; border-bottom: 1px solid var(--line); }
 .add-rows { list-style: none; margin: 0; padding: 0; }
-.add-rows li { align-items: baseline; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.add-rows li { border-bottom: 1px solid var(--line); }
 .add-rows li.is-new { animation: add-in .35s ease-out; }
 @keyframes add-in { from { opacity: 0; transform: translateY(6px); } }
-.add-head > *, .add-rows li > * { padding-left: 4px; }
-.add-rows .ipa { margin: 0 0 0 10px; font-size: 12px; }
+.add-head > * { padding-left: 4px; }
+.add-rows .ipa { margin: 0 8px 0 6px; font-size: 12px; white-space: nowrap; flex: none; }
 .add-entry { padding: 6px 0; border-bottom: 1px solid var(--line); }
-.add-entry input {
-  border: 0; border-radius: 6px; padding: 8px 4px; background: transparent; font-size: 16px;
-}
-.add-entry input:focus { background: #f6f6f6; }
 .add-entry input::placeholder { color: #c4c4c4; font-weight: 700; }
-.add-msg { margin: 10px 4px 0; min-height: 1.4em; color: var(--sub); font-size: 12px; }
+.add-foot { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-top: 16px; }
+.add-msg { margin: 6px 4px 0; min-height: 1.4em; color: var(--sub); font-size: 12px; }
+.add-rows li { padding: 4px 0; align-items: center; }
+.add-cell { display: flex; align-items: baseline; min-width: 0; }
+.add-cell input, .add-entry input {
+  border: 0; border-radius: 6px; padding: 8px 4px; background: transparent; font-size: 16px; min-width: 0;
+}
+.add-cell input { flex: 1; width: auto; }
+.add-cell input:hover { background: #fafafa; }
+.add-cell input:focus, .add-entry input:focus { background: #f6f6f6; }
 
 /* ---------- 初めて出てくる単語 ----------
    打った文字だけ黒くなる。スワイプはどちらの向きでも紫 */

@@ -321,6 +321,12 @@
    */
   let lastAdded = [];
   let flashId = null;
+
+  function ipaText(w) {
+    return w.ipaStatus === "pending" ? "発音記号を取得中…" : w.ipaStatus === "none" ? "" : w.ipa;
+  }
+
+  /* 追加済みの行。Enter した後もそのまま直せる（直すと単語データにすぐ反映） */
   function renderAdded() {
     const ul = $("added-list");
     ul.innerHTML = "";
@@ -328,15 +334,34 @@
       const w = Storage.getWord(id);
       if (!w) continue;
       const li = document.createElement("li");
+      li.dataset.id = id;
       if (id === flashId) li.className = "is-new";
-      const ipa = w.ipaStatus === "pending" ? "発音記号を取得中…" : w.ipaStatus === "none" ? "" : w.ipa;
-      li.innerHTML = `<div><span class="en"></span><span class="ipa"></span></div><span class="ja"></span>`;
-      li.querySelector(".en").textContent = w.word;
-      li.querySelector(".ipa").textContent = ipa;
-      li.querySelector(".ja").textContent = w.meaning;
+      li.innerHTML = `<div class="add-cell"><input class="en" data-f="word"><span class="ipa"></span></div>
+        <div class="add-cell"><input class="ja" data-f="meaning"></div>`;
+      const [en, ja] = li.querySelectorAll("input");
+      en.value = w.word;
+      ja.value = w.meaning;
+      en.spellcheck = false;
+      en.autocomplete = ja.autocomplete = "off";
+      li.querySelector(".ipa").textContent = ipaText(w);
       ul.appendChild(li);
     }
     flashId = null;
+  }
+
+  /* 発音記号だけ書き換える（編集中の入力欄を作り直さないように） */
+  function refreshAddedIpa() {
+    for (const li of $("added-list").children) {
+      const w = Storage.getWord(li.dataset.id);
+      if (w) li.querySelector(".ipa").textContent = ipaText(w);
+    }
+  }
+
+  function fetchIpa() {
+    IPA.fillMissing(() => {
+      refreshAddedIpa();
+      if (route === "list") renderList();
+    });
   }
 
   function addMessage(text) {
@@ -348,12 +373,62 @@
     lastAdded = lastAdded.concat(added.map((w) => w.id)).slice(-100);
     flashId = added.length === 1 ? added[0].id : null;
     renderAdded();
-    IPA.fillMissing(() => {
-      renderAdded();
-      if (route === "list") renderList();
-    });
+    fetchIpa();
     return added.length;
   }
+
+  /* 追加済みの行を直したとき */
+  function editAdded(input) {
+    const id = input.closest("li").dataset.id;
+    const w = Storage.getWord(id);
+    if (!w) return;
+    const value = input.value.trim();
+    const f = input.dataset.f;
+    if (value === w[f]) return;
+    if (!value) {
+      input.value = w[f];
+      return addMessage("空にはできません。消すときは単語一覧から");
+    }
+    if (f === "word") {
+      const dup = Storage.getWords().some((x) => x.id !== id && x.word.toLowerCase() === value.toLowerCase());
+      if (dup) {
+        input.value = w.word;
+        return addMessage(`「${value}」はもう登録されています`);
+      }
+      // 綴りが変わったら発音記号は取り直し、AI解説も作り直し
+      Storage.updateWord(id, { word: value, ipa: "", ipaStatus: "pending", ai: null });
+      refreshAddedIpa();
+      fetchIpa();
+    } else {
+      Storage.updateWord(id, { meaning: value, ai: null });
+    }
+    addMessage("");
+  }
+
+  $("added-list").addEventListener("change", (e) => {
+    if (e.target.matches("input")) editAdded(e.target);
+  });
+  $("added-list").addEventListener("keydown", (e) => {
+    if (!e.target.matches("input") || !isEnter(e)) return;
+    e.preventDefault();
+    // 英語 → 日本語 → 入力行の英単語、の順に進む
+    if (e.target.dataset.f === "word") e.target.closest("li").querySelector('[data-f="meaning"]').focus();
+    else $("add-word").focus();
+  });
+
+  /* 保存：入力途中の行があれば追加してから、画面をまっさらにする（単語はEnterの時点で保存済み） */
+  $("add-save").addEventListener("click", () => {
+    const word = $("add-word").value.trim();
+    const meaning = $("add-meaning").value.trim();
+    if (word && meaning) addPairs([[word, meaning]]);
+    const n = $("added-list").children.length;
+    lastAdded = [];
+    renderAdded();
+    $("add-word").value = "";
+    $("add-meaning").value = "";
+    addMessage(n ? `${n}語を保存しました` : "");
+    $("add-word").focus();
+  });
 
   const wordInput = $("add-word");
   const meaningInput = $("add-meaning");
