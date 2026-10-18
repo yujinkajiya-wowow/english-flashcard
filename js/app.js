@@ -9,15 +9,18 @@
   Storage.seedIfEmpty(TODAY);
 
   /* =========================================================
-   * ルーティング（#/flash, #/add, #/list）
+   * ルーティング（#/home, #/flash, #/add, #/test, #/list, #/settings）
    * ========================================================= */
-  let route = "flash";
+  const ROUTES = ["home", "flash", "add", "test", "list", "settings"];
+  let route = "home";
   function go() {
-    route = (location.hash.replace("#/", "") || "flash").split("?")[0];
-    if (!["flash", "add", "test", "list"].includes(route)) route = "flash";
-    for (const v of ["flash", "add", "test", "list"]) $("view-" + v).hidden = v !== route;
+    route = (location.hash.replace("#/", "") || "home").split("?")[0];
+    if (!ROUTES.includes(route)) route = "home";
+    document.body.dataset.route = route;
+    for (const v of ROUTES) $("view-" + v).hidden = v !== route;
     Explain.close();
-    document.querySelectorAll(".nav a").forEach((a) => a.classList.toggle("active", a.dataset.route === route));
+    document.querySelectorAll(".side a").forEach((a) => a.classList.toggle("active", a.dataset.route === route));
+    if (route === "home") window.DF.Home.enter();
     if (route === "flash") enterFlash();
     if (route === "list") renderList();
     if (route === "test") window.DF.Test.enter();

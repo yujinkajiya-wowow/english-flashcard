@@ -26,6 +26,29 @@
        url("../fonts/Degular-Regular.otf") format("opentype"),
        url("../fonts/DegularDemo-Regular.otf") format("opentype");
 }
+/* Futura（ホーム・左のバー）。Degular と同じく、Mac にインストールしたものを local() で使う。
+   無ければ /fonts/ のファイル、それも無ければ Mac 標準の Futura → Jost */
+@font-face {
+  font-family: "Futura App";
+  font-weight: 400;
+  font-display: swap;
+  src: local("Futura Cyrillic Book"), local("FuturaCyrillicBook"),
+       url("../fonts/FuturaCyrillic-Book.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Futura App";
+  font-weight: 600;
+  font-display: swap;
+  src: local("Futura Cyrillic Heavy"), local("FuturaCyrillicHeavy"),
+       url("../fonts/FuturaCyrillic-Heavy.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Futura App";
+  font-weight: 800;
+  font-display: swap;
+  src: local("Futura Cyrillic Extra Bold"), local("FuturaCyrillic-ExtraBold"),
+       url("../fonts/FuturaCyrillic-ExtraBold.ttf") format("truetype");
+}
 /* Google Fonts が読めない環境向け。/fonts/ に置いた LINE Seed JP を使う */
 @font-face {
   font-family: "LINE Seed JP Local";
@@ -49,6 +72,8 @@
   /* IPA記号（ə ʃ ŋ など）は Degular に無い可能性があるので別系統 */
   --font-ipa: "Noto Sans", "Lucida Grande", system-ui, sans-serif;
   --font-ui: var(--font-en), var(--font-ja);
+  --font-futura: "Futura App", "Futura PT", "Futura", "Jost", var(--font-ja);
+  --side-w: 88px;
 
   --bg: #fff;
   --fg: #111;
@@ -66,6 +91,7 @@ html, body {
   overscroll-behavior-x: none;  /* Mac の2本指スワイプ「戻る/進む」を止める */
 }
 body {
+  padding-left: var(--side-w);
   background: var(--bg);
   color: var(--fg);
   font-family: "Degular", "Inter", "LINE Seed JP", "LINE Seed JP Local", "Noto Sans JP", system-ui, sans-serif;
@@ -75,14 +101,34 @@ body {
 .ja { font-family: var(--font-ja); font-weight: 700; }
 [hidden] { display: none !important; }
 
-/* ---------- ナビ（目立たせない） ---------- */
-.nav {
-  position: fixed; top: 16px; left: 20px; z-index: 10;
-  display: flex; gap: 16px; font-size: 12px;
+/* ---------- 左のバー ----------
+   ふだんはアイコンだけ。カーソルを置いたまま少し待つと広がってラベルが出る */
+.side {
+  position: fixed; left: 0; top: 0; bottom: 0; z-index: 15;
+  width: var(--side-w); overflow: hidden;
+  display: flex; flex-direction: column; gap: 22px; padding: 64px 0 28px;
+  background: #fff; border-radius: 0 40px 40px 0;
+  box-shadow: 0 0 28px rgba(0, 0, 0, .07);
+  transition: width .28s cubic-bezier(.3, .7, .3, 1);
 }
-.nav a { color: var(--sub); text-decoration: none; }
-.nav a.active { color: var(--fg); }
-.nav a:hover { color: var(--fg); }
+.side.is-open { width: 220px; }
+.side a {
+  position: relative; display: flex; align-items: center; gap: 16px;
+  height: 44px; padding-left: 27px; color: var(--fg); text-decoration: none; white-space: nowrap;
+}
+.side-icon { width: 34px; height: 34px; flex: none; transition: transform .15s; }
+.side a:hover .side-icon { transform: scale(1.06); }
+.side-label {
+  font-family: var(--font-futura); font-weight: 600; font-size: 18px;
+  opacity: 0; transform: translateX(-6px); transition: opacity .2s, transform .2s;
+}
+.side.is-open .side-label { opacity: 1; transform: none; transition-delay: .06s; }
+/* 今いる画面は、左端に小さな印 */
+.side a.active::before {
+  content: ""; position: absolute; left: 9px; top: 50%; width: 5px; height: 5px; margin-top: -2.5px;
+  border-radius: 50%; background: var(--fg);
+}
+.side-bottom { margin-top: auto; }
 
 .view { min-height: 100vh; padding: 64px 24px 40px; }
 .view.narrow { max-width: 640px; margin: 0 auto; }
@@ -149,7 +195,7 @@ body {
   transition: opacity .18s linear;
 }
 .glow-left {
-  left: 0;
+  left: var(--side-w);
   background: linear-gradient(to right,
     rgba(var(--ok), 0.300) 0%,
     rgba(var(--ok), 0.228) 10%,
@@ -208,7 +254,6 @@ textarea { font-family: var(--font-en), var(--font-ja); font-weight: 400; resize
 
 /* ---------- 一覧 ---------- */
 .list-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 12px; }
-.list-tools { display: flex; gap: 16px; align-items: center; font-size: 12px; color: var(--sub); }
 .toggle { display: flex; align-items: center; gap: 4px; cursor: pointer; }
 .toggle input { width: auto; }
 .words { width: 100%; border-collapse: collapse; font-size: 14px; }
@@ -523,3 +568,41 @@ div.t-sentence { display: flex; align-items: center; min-height: 7cqw; padding-t
     rgba(var(--new), 0.001) 90%,
     rgba(var(--new), 0.000) 100%);
 }
+
+/* ---------- ホーム ---------- */
+.futura { font-family: var(--font-futura); }
+body[data-route="home"] {
+  background-image: radial-gradient(circle, #dcdcdc 1.3px, transparent 1.6px);
+  background-size: 38px 38px;
+  background-attachment: fixed;
+}
+.home {
+  min-height: calc(100vh - 104px); display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding-bottom: 4vh;
+}
+.home p { margin: 0; }
+.home-date { font-weight: 600; font-size: clamp(18px, 2vw, 34px); }
+.home-time { font-weight: 800; font-size: clamp(72px, 9.5vw, 180px); line-height: .95; letter-spacing: .02em; margin-top: .1em !important; }
+.home-msg { font-weight: 400; font-size: clamp(14px, 1.35vw, 24px); margin-top: 2.2em !important; max-width: 760px; padding: 0 16px; }
+.home-rule { width: clamp(160px, 15vw, 300px); height: 3px; border: 0; background: var(--fg); margin: 3.2em 0 2.6em; }
+
+/* 連続記録：赤→オレンジのグラデーション文字に、太い黄色のフチ */
+.home-streak { font-size: clamp(56px, 6.4vw, 120px); line-height: 1; }
+.home-streak-msg { font-size: clamp(18px, 2vw, 36px); margin-top: .9em !important; }
+.pop { position: relative; display: inline-block; font-family: var(--font-en); font-weight: 800; letter-spacing: .01em; }
+.pop-unit { font-size: .62em; }
+.pop::before {
+  content: attr(data-text); position: absolute; left: 0; top: 0;
+  color: #ffd319; -webkit-text-stroke: .2em #ffd319; text-stroke: .2em #ffd319;
+}
+.pop-small::before { -webkit-text-stroke-width: .26em; }
+.pop-fill {
+  position: relative; color: transparent;
+  background: linear-gradient(#e2302c, #f28a2e); -webkit-background-clip: text; background-clip: text;
+}
+
+/* ---------- 設定 ---------- */
+.settings { list-style: none; margin: 0; padding: 0; }
+.settings li { padding: 14px 4px; border-bottom: 1px solid var(--line); font-size: 14px; }
+.setting-key { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.setting-key .apikey { width: 260px; }

@@ -149,6 +149,22 @@
     return JSON.parse(out);
   }
 
+  /* ホームに出す「今日のひとこと」。英語の短い一文だけを返す */
+  function daily(date) {
+    const [y, m, d] = date.split("-").map(Number);
+    const weekday = new Date(y, m - 1, d).toLocaleDateString("en-US", { weekday: "long" });
+    return call(
+      [
+        `今日は ${date}（${weekday}）です。英語を勉強している日本人の学習者に、ホーム画面で見せる英語の一文を1つだけ書いてください。`,
+        "条件：",
+        "- 中学〜高校レベルの単語で、10〜15語くらいの自然な英文",
+        "- 日常のちょっとした話題や季節・曜日にちなんだ、くすっとできる語りかけ（例：In the morning, you feel like having a cup of coffee, don't you?）",
+        "- 説教くさい名言や、勉強しろという圧は避ける",
+        "- 英文だけを出力する。訳・引用符・説明は付けない",
+      ].join("\n")
+    );
+  }
+
   window.DF = window.DF || {};
-  window.DF.AI = { hasKey, explain, ask, chat, grade };
+  window.DF.AI = { hasKey, explain, ask, chat, grade, daily };
 })();
