@@ -195,20 +195,15 @@ input, textarea {
 }
 input:focus, textarea:focus { border-color: var(--fg); }
 textarea { font-family: var(--font-en), var(--font-ja); font-weight: 400; resize: vertical; }
-.row { display: flex; gap: 8px; margin-bottom: 24px; }
 .btn {
   border: 1px solid var(--fg); background: var(--fg); color: #fff;
   border-radius: 8px; padding: 10px 18px; cursor: pointer; white-space: nowrap; font-weight: 700;
 }
-#add-bulk .btn { margin-top: 8px; }
 .result .btn { margin-top: 32px; }
 .result .dev { margin-top: 20px; }
 .link { border: 0; background: none; color: var(--sub); cursor: pointer; padding: 0; font-size: 12px; }
 .link:hover { color: var(--fg); }
 
-.added { list-style: none; padding: 0; margin: 24px 0 0; }
-.added li { display: flex; gap: 12px; align-items: baseline; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
-.added .ipa { margin: 0; font-size: 13px; }
 
 /* ---------- 一覧 ---------- */
 .list-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 12px; }
@@ -229,7 +224,6 @@ textarea { font-family: var(--font-en), var(--font-ja); font-weight: 400; resize
 @media (max-width: 640px) {
   .stats { gap: 24px; }
   .stats dd { font-size: 30px; }
-  .row { flex-wrap: wrap; }
   .words th:nth-child(4), .words td:nth-child(4) { display: none; }
 }
 
@@ -467,3 +461,22 @@ div.t-sentence { display: flex; align-items: center; min-height: 7cqw; padding-t
 .t-bar-pct { font-size: 11px; color: var(--sub); }
 .t-bar.is-now .t-bar-pct { color: var(--sum-orange-deep); }
 .t-bar-date { font-size: 10px; color: #a9a9a9; }
+
+/* ---------- 単語の追加 ----------
+   ノートの罫線のような2列。上に追加済み、いちばん下が入力行 */
+.add-sheet { font-size: 16px; }
+.add-head, .add-rows li, .add-entry { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.add-head { padding: 0 0 8px; color: var(--sub); font-size: 12px; border-bottom: 1px solid var(--line); }
+.add-rows { list-style: none; margin: 0; padding: 0; }
+.add-rows li { align-items: baseline; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.add-rows li.is-new { animation: add-in .35s ease-out; }
+@keyframes add-in { from { opacity: 0; transform: translateY(6px); } }
+.add-head > *, .add-rows li > * { padding-left: 4px; }
+.add-rows .ipa { margin: 0 0 0 10px; font-size: 12px; }
+.add-entry { padding: 6px 0; border-bottom: 1px solid var(--line); }
+.add-entry input {
+  border: 0; border-radius: 6px; padding: 8px 4px; background: transparent; font-size: 16px;
+}
+.add-entry input:focus { background: #f6f6f6; }
+.add-entry input::placeholder { color: #c4c4c4; font-weight: 700; }
+.add-msg { margin: 10px 4px 0; min-height: 1.4em; color: var(--sub); font-size: 12px; }
