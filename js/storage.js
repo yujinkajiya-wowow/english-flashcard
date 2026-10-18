@@ -10,6 +10,7 @@
     days: "df.days",
     settings: "df.settings",
     tests: "df.tests",
+    daily: "df.daily",
   };
 
   function read(key, fallback) {
@@ -132,6 +133,14 @@
       const tests = this.getTests().concat(result).slice(-100);
       write(KEY.tests, tests);
       return tests;
+    },
+
+    /* ---- ホームの「今日のひとこと」 { date, text } ---- */
+    getDaily() {
+      return read(KEY.daily, null);
+    },
+    setDaily(value) {
+      write(KEY.daily, value);
     },
 
     /* ---- 設定 ---- */
