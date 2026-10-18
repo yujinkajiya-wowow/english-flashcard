@@ -193,17 +193,15 @@
   <!-- 単語の追加 -->
   <section class="view narrow" id="view-add" hidden>
     <h1 class="title">単語の追加</h1>
-    <form id="add-single" class="row">
-      <input id="add-word" class="en" placeholder="英単語" autocomplete="off" required>
-      <input id="add-meaning" class="ja" placeholder="日本語訳" autocomplete="off" required>
-      <button class="btn">追加</button>
-    </form>
-    <p class="sub">まとめて追加（1行に「英単語,日本語」）</p>
-    <form id="add-bulk">
-      <textarea id="add-bulk-text" rows="10" placeholder="chore,雑用&#10;detect,見つける"></textarea>
-      <button class="btn">まとめて追加</button>
-    </form>
-    <ul class="added" id="added-list"></ul>
+    <div class="add-sheet">
+      <div class="add-head"><span>英単語</span><span>日本語訳</span></div>
+      <ul class="add-rows" id="added-list"></ul>
+      <div class="add-entry" id="add-entry">
+        <input id="add-word" class="en" placeholder="英単語" autocomplete="off" autocapitalize="off" spellcheck="false">
+        <input id="add-meaning" class="ja" placeholder="日本語訳" autocomplete="off">
+      </div>
+      <p class="add-msg" id="add-msg"></p>
+    </div>
   </section>
 
   <!-- 単語一覧 -->

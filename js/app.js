@@ -21,6 +21,10 @@
     if (route === "flash") enterFlash();
     if (route === "list") renderList();
     if (route === "test") window.DF.Test.enter();
+    if (route === "add") {
+      renderAdded();
+      $("add-word").focus();
+    }
   }
   window.addEventListener("hashchange", go);
 
@@ -242,7 +246,13 @@
       .filter(Boolean);
   }
 
+  /*
+   * 英単語 → Enter → 日本語訳 → Enter で1語追加し、次の行へ。
+   * 「英単語,日本語」を何行か英単語欄に貼り付けると、まとめて追加する。
+   * 追加した単語は入力欄の上に、追加した順に並べる（この画面を開いている間のぶん）
+   */
   let lastAdded = [];
+  let flashId = null;
   function renderAdded() {
     const ul = $("added-list");
     ul.innerHTML = "";
@@ -250,19 +260,25 @@
       const w = Storage.getWord(id);
       if (!w) continue;
       const li = document.createElement("li");
-      const ipa =
-        w.ipaStatus === "pending" ? "取得中…" : w.ipaStatus === "none" ? "発音記号なし（一覧で入力できます）" : w.ipa;
-      li.innerHTML = `<span class="en"></span><span class="ipa"></span><span class="ja"></span>`;
-      li.children[0].textContent = w.word;
-      li.children[1].textContent = ipa;
-      li.children[2].textContent = w.meaning;
+      if (id === flashId) li.className = "is-new";
+      const ipa = w.ipaStatus === "pending" ? "発音記号を取得中…" : w.ipaStatus === "none" ? "" : w.ipa;
+      li.innerHTML = `<div><span class="en"></span><span class="ipa"></span></div><span class="ja"></span>`;
+      li.querySelector(".en").textContent = w.word;
+      li.querySelector(".ipa").textContent = ipa;
+      li.querySelector(".ja").textContent = w.meaning;
       ul.appendChild(li);
     }
+    flashId = null;
+  }
+
+  function addMessage(text) {
+    $("add-msg").textContent = text || "";
   }
 
   function addPairs(pairs) {
     const added = Storage.addWords(pairs, TODAY);
-    lastAdded = added.map((w) => w.id).concat(lastAdded).slice(0, 50);
+    lastAdded = lastAdded.concat(added.map((w) => w.id)).slice(-100);
+    flashId = added.length === 1 ? added[0].id : null;
     renderAdded();
     IPA.fillMissing(() => {
       renderAdded();
@@ -271,28 +287,56 @@
     return added.length;
   }
 
-  $("add-single").addEventListener("submit", (e) => {
+  const wordInput = $("add-word");
+  const meaningInput = $("add-meaning");
+  // 日本語入力の変換確定の Enter では進まない
+  const isEnter = (e) => e.key === "Enter" && !e.isComposing && e.keyCode !== 229;
+
+  wordInput.addEventListener("keydown", (e) => {
+    if (!isEnter(e)) return;
     e.preventDefault();
-    const word = $("add-word").value.trim();
-    const meaning = $("add-meaning").value.trim();
-    if (!word || !meaning) return;
+    if (wordInput.value.trim()) meaningInput.focus();
+  });
+
+  meaningInput.addEventListener("keydown", (e) => {
+    // 空のまま Backspace で英単語欄に戻る
+    if (e.key === "Backspace" && !meaningInput.value) {
+      e.preventDefault();
+      wordInput.focus();
+      return;
+    }
+    if (!isEnter(e)) return;
+    e.preventDefault();
+    const word = wordInput.value.trim();
+    const meaning = meaningInput.value.trim();
+    if (!word) return wordInput.focus();
+    if (!meaning) return;
     if (addPairs([[word, meaning]])) {
-      $("add-word").value = "";
-      $("add-meaning").value = "";
-      $("add-word").focus();
+      wordInput.value = "";
+      meaningInput.value = "";
+      addMessage("");
+      wordInput.focus();
     } else {
-      alert("その単語はもう登録されています");
+      addMessage(`「${word}」はもう登録されています`);
+      wordInput.focus();
+      wordInput.select();
     }
   });
 
-  $("add-bulk").addEventListener("submit", (e) => {
+  // 「英単語,日本語」の行を貼り付けたら、まとめて追加
+  wordInput.addEventListener("paste", (e) => {
+    const text = (e.clipboardData || window.clipboardData).getData("text");
+    const pairs = parseLines(text);
+    if (!pairs.length) return; // ふつうの単語の貼り付け
     e.preventDefault();
-    const pairs = parseLines($("add-bulk-text").value);
-    if (!pairs.length) return;
     const n = addPairs(pairs);
-    $("add-bulk-text").value = "";
-    if (n < pairs.length) alert(`${n}件追加しました（${pairs.length - n}件は重複のためスキップ）`);
+    const skipped = pairs.length - n;
+    addMessage(`${n}語追加しました` + (skipped ? `（${skipped}語は登録済みのためスキップ）` : ""));
+    wordInput.value = "";
+    meaningInput.value = "";
   });
+
+  wordInput.addEventListener("input", () => addMessage(""));
 
   /* =========================================================
    * 単語一覧
