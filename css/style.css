@@ -589,7 +589,7 @@ body[data-route="home"] {
 /* 連続記録：赤→オレンジのグラデーション文字に、太い黄色のフチ */
 .home-streak { font-size: clamp(56px, 6.4vw, 120px); line-height: 1; }
 .home-streak-msg { font-size: clamp(18px, 2vw, 36px); margin-top: .9em !important; }
-.pop { position: relative; display: inline-block; font-family: var(--font-en); font-weight: 800; letter-spacing: .01em; }
+.pop { position: relative; display: inline-block; font-family: var(--font-futura); font-weight: 800; letter-spacing: .01em; }
 .pop-unit { font-size: .62em; }
 .pop::before {
   content: attr(data-text); position: absolute; left: 0; top: 0;
