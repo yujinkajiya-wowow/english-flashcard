@@ -110,7 +110,6 @@
       input.className = "t-input en";
       $("t-correct").textContent = "";
       input.focus();
-      $("t-hint").textContent = "英単語を入力して Enter";
     } else {
       const box = $("t-choices");
       box.innerHTML = "";
@@ -125,7 +124,6 @@
         box.appendChild(b);
         if (i === 0) box.appendChild(Object.assign(document.createElement("span"), { className: "t-break" }));
       });
-      $("t-hint").textContent = "クリック、または矢印キー（↑ ← ↓ →）で選ぶ";
     }
     updateProgress();
   }
@@ -140,7 +138,6 @@
     $("t-sview").hidden = true;
     $("t-comment").textContent = "";
     $("t-question").classList.add("t-sentence-q");
-    $("t-hint").textContent = "英語に訳して Enter";
 
     if (!item.ex) {
       // 例文は AI解説のものを使う。まだ無ければここで作る（解説としても保存される）
@@ -233,7 +230,6 @@
       input.classList.add("is-ng");
       input.focus();
       input.setSelectionRange(input.value.length, input.value.length);
-      $("t-hint").textContent = "直して Enter で採点し直す　そのまま Enter で次へ";
       return;
     }
 
@@ -246,7 +242,6 @@
     view.className = "t-input t-sentence en is-ok";
     view.hidden = false;
     input.hidden = true;
-    $("t-hint").textContent = "Enter で次へ";
     record(true);
     glow("left");
   }
@@ -470,10 +465,6 @@
   $("t-ai-btn").addEventListener("click", () => {
     const item = test && test.items[test.index];
     if (item && item.chat) Explain.openChat(item.chat);
-  });
-  $("t-hint").addEventListener("click", () => {
-    const item = test && test.items[test.index];
-    if (item && item.graded) submitTranslate();
   });
   $("t-again").addEventListener("click", () => {
     test = build();
