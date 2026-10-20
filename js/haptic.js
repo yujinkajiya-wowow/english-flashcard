@@ -45,12 +45,14 @@
   const isDesktop = !!(window.__TAURI__ && window.__TAURI__.core);
 
   /**
-   * @param {"edge"|"ok"|"ng"|"tick"} kind
+   * @param {"ramp-light"|"ramp"|"edge"|"ok"|"ng"|"tick"} kind
+   * @param {number} [level] ramp のときの強さ（0〜1）
+   *   ramp-light / ramp … 確定ラインに向かって引っぱっている途中（だんだん間隔が詰まる）
    *   edge … スワイプが確定ラインを越えた瞬間（指がまだトラックパッドに乗っている）
    *   ok / ng … 判定が確定した（スワイプなら指はもう離れている）
    *   tick … 新しい単語を打ち終えた
    */
-  function haptic(kind) {
+  function haptic(kind, level = 1) {
     // 1) デスクトップ版（Tauri）：トラックパッドを本当に振動させる。
     //    Mac の振動は指が触れている間しか感じないので、主役は edge
     if (isDesktop) {
@@ -59,10 +61,12 @@
       window.native.haptic(kind);
     } else if (navigator.vibrate) {
       // 2) バイブレーション API がある端末（主に Android）
-      try { navigator.vibrate(kind === "ng" ? [12, 40, 12] : kind === "edge" ? 8 : 15); } catch (e) {}
+      const isRamp = kind === "ramp" || kind === "ramp-light";
+      const ms = kind === "ng" ? [12, 40, 12] : kind === "edge" ? 18 : isRamp ? Math.round(3 + level * 9) : 15;
+      try { navigator.vibrate(ms); } catch (e) {}
     }
-    // 3) 効果音（オン/オフ可）。確定ラインを越えただけでは鳴らさない
-    if (kind !== "edge" && window.DF.Storage.getSettings().sound) click(kind);
+    // 3) 効果音（オン/オフ可）。引っぱっている途中や確定ラインを越えただけでは鳴らさない
+    if (["ok", "ng", "tick"].includes(kind) && window.DF.Storage.getSettings().sound) click(kind);
   }
 
   // iOS Safari などは最初のユーザー操作で AudioContext を起こしておく必要がある

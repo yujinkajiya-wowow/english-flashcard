@@ -608,6 +608,9 @@ body[data-route="home"] {
 .setting-key { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .setting-key .apikey { width: 260px; }
 .setting-data { display: flex; gap: 24px; }
+.setting-confirm p { margin: 0 0 12px; line-height: 1.6; }
+.setting-confirm-actions { display: flex; gap: 10px; }
+.words .del.is-armed { color: rgb(var(--ng)); font-weight: 700; }
 .settings li.setting-note { color: var(--sub); font-size: 12px; border-bottom: 0; }
 
 /* 結果画面のボタン */

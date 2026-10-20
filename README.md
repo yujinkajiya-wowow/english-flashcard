@@ -45,7 +45,7 @@ python3 -m http.server 8000   # → http://localhost:8000
 
 - main にマージすると GitHub Actions（`.github/workflows/desktop.yml`）が Mac 上でアプリを作り、[Releases の desktop-latest](../../releases/tag/desktop-latest) に `DailyFlash_*.dmg` を置く
 - Apple の署名はしていない（アドホック署名のみ）ので、初回は「システム設定 → プライバシーとセキュリティ」の「このまま開く」で起動する
-- 振動は、スワイプが確定ラインを越えた瞬間（指がまだトラックパッドに乗っているとき）に1回。Mac の振動は指が触れている間しか感じないため
+- 振動は、引っぱっている途中から「コッ…コッ…ココココ」とだんだん間隔が詰まり、確定ラインを越えた瞬間に強めの2回。Mac の振動は強さを変えられないので、間隔と種類（弱→普通→強）で強くなっていく感じを出している。指が触れている間しか感じないため、離した後には鳴らさない
 - データはブラウザ版とは別に保存される。ブラウザ版の設定画面で「JSONを書き出す」→ デスクトップ版の設定画面で「JSONを読み込む」で移す
 - 手元で作るとき：Rust と Xcode のコマンドラインツールを入れて `./scripts/prepare-dist.sh && npx @tauri-apps/cli@2.12.1 build`
 
