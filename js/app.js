@@ -539,8 +539,20 @@
         if (f === "word" || f === "meaning") patch.ai = null; // 解説を作り直す
         Storage.updateWord(w.id, patch);
       });
-      tr.querySelector(".del").addEventListener("click", () => {
-        if (!confirm(`「${w.word}」を削除しますか？`)) return;
+      // confirm() はデスクトップ版で出ないので、もう一度押してもらって確定する
+      const del = tr.querySelector(".del");
+      let armTimer = 0;
+      del.addEventListener("click", () => {
+        if (!del.classList.contains("is-armed")) {
+          del.classList.add("is-armed");
+          del.textContent = "本当に削除";
+          armTimer = setTimeout(() => {
+            del.classList.remove("is-armed");
+            del.textContent = "削除";
+          }, 3000);
+          return;
+        }
+        clearTimeout(armTimer);
         Storage.deleteWord(w.id);
         renderList();
       });
@@ -580,7 +592,15 @@
     URL.revokeObjectURL(a.href);
   });
 
-  // 書き出した JSON を読み込む（ブラウザ版からデスクトップ版へデータを移すとき）
+  // 書き出した JSON を読み込む（ブラウザ版からデスクトップ版へデータを移すとき）。
+  // confirm() はデスクトップ版で出ない（押しても何も起きない）ので、確認は画面の中でする
+  let pendingImport = null;
+  function showImportConfirm(data) {
+    pendingImport = data;
+    $("import-count").textContent = data.words.length;
+    $("import-confirm").hidden = false;
+    dataMessage("");
+  }
   $("import-json").addEventListener("click", () => $("import-file").click());
   $("import-file").addEventListener("change", async (e) => {
     const file = e.target.files[0];
@@ -588,13 +608,27 @@
     if (!file) return;
     try {
       const data = JSON.parse(await file.text());
-      if (!confirm("いまの単語と学習記録を、このファイルの内容で置き換えます。よろしいですか？")) return;
-      const n = Storage.importAll(data);
+      if (!data || !Array.isArray(data.words)) throw new Error("デイリーフラッシュの JSON ではありません");
+      showImportConfirm(data);
+    } catch (err) {
+      dataMessage("読み込めませんでした：" + err.message);
+    }
+  });
+  $("import-ok").addEventListener("click", () => {
+    if (!pendingImport) return;
+    try {
+      const n = Storage.importAll(pendingImport);
+      $("import-confirm").hidden = true;
       dataMessage(`${n}語を読み込みました`);
       setTimeout(() => location.reload(), 900);
     } catch (err) {
       dataMessage("読み込めませんでした：" + err.message);
     }
+    pendingImport = null;
+  });
+  $("import-cancel").addEventListener("click", () => {
+    pendingImport = null;
+    $("import-confirm").hidden = true;
   });
 
   /* ---------- 起動 ---------- */

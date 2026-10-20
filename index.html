@@ -242,6 +242,13 @@
         <button class="link" id="import-json">JSONを読み込む</button>
         <input type="file" id="import-file" accept="application/json,.json" hidden>
       </li>
+      <li class="setting-confirm" id="import-confirm" hidden>
+        <p>このファイルには <b id="import-count">0</b> 語入っています。いまの単語と学習記録を、この内容で置き換えますか？</p>
+        <div class="setting-confirm-actions">
+          <button class="btn" id="import-ok" type="button">置き換える</button>
+          <button class="btn btn-sub" id="import-cancel" type="button">やめる</button>
+        </div>
+      </li>
       <li class="setting-note" id="data-msg" hidden></li>
     </ul>
   </section>
