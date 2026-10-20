@@ -3,7 +3,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 /// JS の haptic(kind) から呼ばれる。
-///   edge   … スワイプが確定ラインを越えた（指がまだトラックパッドに乗っている瞬間）
+///   ramp-light / ramp … 確定ラインに向かって引っぱっている途中。だんだん間隔が詰まって鳴る
+///   edge   … スワイプが確定ラインを越えた（指がまだトラックパッドに乗っている瞬間）。2連打で強く
 ///   tick   … 新しい単語を打ち終えた
 ///   ok, ng … 判定が確定した
 #[tauri::command]
@@ -11,7 +12,16 @@ fn haptic(app: tauri::AppHandle, kind: String) {
     #[cfg(target_os = "macos")]
     {
         // AppKit はメインスレッドからしか触れない
-        let _ = app.run_on_main_thread(move || mac::perform(&kind));
+        let first = kind.clone();
+        let _ = app.run_on_main_thread(move || mac::perform(&first));
+        // Mac の振動には強さの指定がないので、edge は少し間をあけてもう1回鳴らして「強く」する
+        if kind == "edge" {
+            let app = app.clone();
+            std::thread::spawn(move || {
+                std::thread::sleep(std::time::Duration::from_millis(45));
+                let _ = app.run_on_main_thread(move || mac::perform(&kind));
+            });
+        }
     }
     #[cfg(not(target_os = "macos"))]
     {
@@ -28,9 +38,11 @@ mod mac {
 
     pub fn perform(kind: &str) {
         let pattern = match kind {
-            // 「カチッ」とはっきり。確定ラインを越えたときに使う
+            // いちばんはっきりした「カチッ」。確定ラインを越えたとき
             "edge" => NSHapticFeedbackPattern::LevelChange,
-            "tick" => NSHapticFeedbackPattern::Alignment,
+            // いちばん弱い「コツ」。引っぱり始めと、新しい単語を打ち終えたとき
+            "ramp-light" | "tick" => NSHapticFeedbackPattern::Alignment,
+            // 中くらい。ラインに近づいてきたとき・判定が確定したとき
             _ => NSHapticFeedbackPattern::Generic,
         };
         let performer = NSHapticFeedbackManager::defaultPerformer();

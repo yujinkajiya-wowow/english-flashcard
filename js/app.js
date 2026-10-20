@@ -51,6 +51,8 @@
     glowRight: $("glow-right"),
     onCommit: (dir) => answer(dir),
     onEdge: () => haptic("edge"),
+    // 前半は弱め、後半は普通の振動。間隔は swipe.js の RAMP でだんだん詰まる
+    onRamp: (level) => haptic(level < 0.5 ? "ramp-light" : "ramp", level),
     isInverted: () => Storage.getSettings().invert,
     isEnabled: () =>
       route === "flash" && !!session && session.queue.length > 0 && !$("stage").hidden && !Explain.isOpen(),

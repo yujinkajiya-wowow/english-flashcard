@@ -22,18 +22,25 @@
 
   const MAX_ROTATE = 7;     // deg
   const EDGE_REARM = 0.9;   // 確定ラインの9割まで戻ったら、次にラインを越えたときにまた振動する
+  // 確定ラインに向かって引っぱっている途中で振動する位置（確定ラインまでの割合）。
+  // 指を一定の速さで動かしたとき、最初はまばらで、ラインに近づくほど間隔が詰まるように並べてある
+  // （カードは端ほど重くなるので、指の移動量で見て間隔が詰まっていくよう逆算した値）
+  const RAMP = [0.3, 0.52, 0.67, 0.78, 0.86, 0.91, 0.945, 0.965, 0.98, 0.99];
+  const RAMP_REARM = 0.93;  // ひとつ前の位置の93%まで戻ったら、その位置の振動をもう一度許す
   const FLY_MS = 380;       // 確定したカードが画面外に消えるまで
   const RELEASE_MS = 160;   // wheel がこれだけ途切れたら指を離したとみなす
   const INERTIA_GAP = 120;  // ロック明けは wheel が一度これだけ途切れるまで無視（慣性の残りを捨てる）
 
   class Swipe {
-    constructor({ target, card, glowLeft, glowRight, onCommit, onEdge, isInverted, isEnabled }) {
+    constructor({ target, card, glowLeft, glowRight, onCommit, onEdge, onRamp, isInverted, isEnabled }) {
       this.target = target;   // transform をかける要素
       this.card = card;
       this.glow = { left: glowLeft, right: glowRight };
       this.onCommit = onCommit;
       this.onEdge = onEdge || (() => {});  // 確定ラインを越えた瞬間（振動用）
       this.edgeDir = null;
+      this.onRamp = onRamp || (() => {});  // 引っぱっている途中の振動。引数は 0〜1 の強さ
+      this.rampIdx = 0;
       this.isInverted = isInverted || (() => false);
       this.isEnabled = isEnabled || (() => true);
 
@@ -89,6 +96,7 @@
       this.cancel();
       this.raw = 0;
       this.edgeDir = null;
+      this.rampIdx = 0;
       this._render();
     }
 
@@ -165,6 +173,20 @@
       if (dir && dir !== this.edgeDir) this.onEdge(dir);
       if (dir) this.edgeDir = dir;
       else if (Math.abs(this.pos) < THRESHOLD * EDGE_REARM) this.edgeDir = null;
+      this._ramp(true);
+    }
+
+    /* 引っぱっている途中の振動。次の位置を越えたら1回。戻ったら、その位置をもう一度鳴らせるようにする */
+    _ramp(notify) {
+      const p = Math.abs(this.pos) / THRESHOLD;
+      if (this.rampIdx < RAMP.length && p >= RAMP[this.rampIdx]) {
+        let idx = this.rampIdx;
+        while (idx < RAMP.length && p >= RAMP[idx]) idx++;
+        this.rampIdx = idx;
+        if (notify && p < 1) this.onRamp(idx / RAMP.length);
+      } else {
+        while (this.rampIdx > 0 && p < RAMP[this.rampIdx - 1] * RAMP_REARM) this.rampIdx--;
+      }
     }
 
     _release() {
@@ -182,6 +204,7 @@
         this.raw *= 0.78;
         if (Math.abs(this.raw) < 0.002) this.raw = 0;
         if (Math.abs(this.pos) < THRESHOLD * EDGE_REARM) this.edgeDir = null;
+        this._ramp(false);
         this._render();
         if (this.raw !== 0) this.springRaf = requestAnimationFrame(step);
       };
