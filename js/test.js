@@ -1,5 +1,5 @@
 /*
- * テスト：今日の単語（今日答えた復習・新規 + まだ残っている分）から出題する。
+ * テスト：今日フラッシュカードで答えた単語から出題する。
  *   単語記述：日本語訳を見て英単語を書く（完全一致。大文字小文字・前後の空白は無視）
  *   単語選択：4択から選ぶ
  *   文章翻訳：AI解説の例文（日本語）を英訳し、AI が採点（スペルミスは直して許す。意味が違えば不正解）
@@ -29,19 +29,12 @@
     return a;
   }
 
-  /* 今日の単語 = 今日回答した単語 + 今日のセッションにまだ残っている単語。まだ何もしていなければ今日出題予定の単語 */
+  /* 今日の単語 = 今日フラッシュカードで答えた単語だけ */
   function todayIds() {
     const today = Scheduler.today();
-    const words = Storage.getWords();
-    const ids = new Set(words.filter((w) => (w.history || []).some((h) => h.date === today)).map((w) => w.id));
-    const s = Storage.getSession();
-    if (s && s.date === today) for (const id of s.queue) ids.add(id);
-    if (!ids.size) {
-      const { review, fresh } = Scheduler.buildToday(words, today);
-      for (const id of review.concat(fresh)) ids.add(id);
-    }
-    const exists = new Set(words.map((w) => w.id));
-    return [...ids].filter((id) => exists.has(id));
+    return Storage.getWords()
+      .filter((w) => (w.history || []).some((h) => h.date === today))
+      .map((w) => w.id);
   }
 
   function build() {
@@ -368,7 +361,7 @@
 
     const empty = !test.items.length;
     for (const id of ["t-row-score", "t-row-types", "t-row-history", "t-again"]) $(id).hidden = empty;
-    $("t-note").textContent = empty ? "今日の単語がまだありません。デイリーフラッシュをやってから来てね" : "";
+    $("t-note").textContent = empty ? "今日のフラッシュカードがまだです。終わったら、その単語でテストできます" : "";
     if (empty) return;
 
     const sum = summarize(test.results);
