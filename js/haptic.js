@@ -42,25 +42,27 @@
     osc.stop(t + 0.1);
   }
 
+  const isDesktop = !!(window.__TAURI__ && window.__TAURI__.core);
+
   /**
-   * @param {"ok"|"ng"|"tick"} kind
+   * @param {"edge"|"ok"|"ng"|"tick"} kind
+   *   edge … スワイプが確定ラインを越えた瞬間（指がまだトラックパッドに乗っている）
+   *   ok / ng … 判定が確定した（スワイプなら指はもう離れている）
+   *   tick … 新しい単語を打ち終えた
    */
   function haptic(kind) {
-    // 1) ネイティブ（デスクトップアプリ化したとき）
-    if (window.__TAURI__ && window.__TAURI__.core) {
+    // 1) デスクトップ版（Tauri）：トラックパッドを本当に振動させる。
+    //    Mac の振動は指が触れている間しか感じないので、主役は edge
+    if (isDesktop) {
       window.__TAURI__.core.invoke("haptic", { kind }).catch(() => {});
-      return;
-    }
-    if (window.native && typeof window.native.haptic === "function") {
+    } else if (window.native && typeof window.native.haptic === "function") {
       window.native.haptic(kind);
-      return;
+    } else if (navigator.vibrate) {
+      // 2) バイブレーション API がある端末（主に Android）
+      try { navigator.vibrate(kind === "ng" ? [12, 40, 12] : kind === "edge" ? 8 : 15); } catch (e) {}
     }
-    // 2) バイブレーション API がある端末
-    if (navigator.vibrate) {
-      try { navigator.vibrate(kind === "ng" ? [12, 40, 12] : 15); } catch (e) {}
-    }
-    // 3) 効果音（オン/オフ可）
-    if (window.DF.Storage.getSettings().sound) click(kind);
+    // 3) 効果音（オン/オフ可）。確定ラインを越えただけでは鳴らさない
+    if (kind !== "edge" && window.DF.Storage.getSettings().sound) click(kind);
   }
 
   // iOS Safari などは最初のユーザー操作で AudioContext を起こしておく必要がある
@@ -69,4 +71,5 @@
 
   window.DF = window.DF || {};
   window.DF.haptic = haptic;
+  window.DF.isDesktop = isDesktop;
 })();

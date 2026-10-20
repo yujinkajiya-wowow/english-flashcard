@@ -50,6 +50,7 @@
     glowLeft: $("glow-left"),
     glowRight: $("glow-right"),
     onCommit: (dir) => answer(dir),
+    onEdge: () => haptic("edge"),
     isInverted: () => Storage.getSettings().invert,
     isEnabled: () =>
       route === "flash" && !!session && session.queue.length > 0 && !$("stage").hidden && !Explain.isOpen(),
@@ -554,13 +555,46 @@
   $("opt-invert").addEventListener("change", (e) => Storage.saveSettings({ invert: e.target.checked }));
   $("opt-apikey").value = settings.apiKey;
   $("opt-apikey").addEventListener("change", (e) => Storage.saveSettings({ apiKey: e.target.value.trim() }));
-  $("export-json").addEventListener("click", () => {
-    const blob = new Blob([JSON.stringify(Storage.exportAll(), null, 2)], { type: "application/json" });
+  function dataMessage(text) {
+    $("data-msg").hidden = !text;
+    $("data-msg").textContent = text;
+  }
+
+  $("export-json").addEventListener("click", async () => {
+    const json = JSON.stringify(Storage.exportAll(), null, 2);
+    // デスクトップ版はファイルのダウンロードができないので、クリップボードにコピーする
+    if (window.DF.isDesktop) {
+      try {
+        await navigator.clipboard.writeText(json);
+        dataMessage("JSON をクリップボードにコピーしました。テキストエディタに貼り付けて .json で保存してください");
+      } catch (e) {
+        dataMessage("コピーできませんでした");
+      }
+      return;
+    }
+    const blob = new Blob([json], { type: "application/json" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = `daily-flash-${TODAY}.json`;
     a.click();
     URL.revokeObjectURL(a.href);
+  });
+
+  // 書き出した JSON を読み込む（ブラウザ版からデスクトップ版へデータを移すとき）
+  $("import-json").addEventListener("click", () => $("import-file").click());
+  $("import-file").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    try {
+      const data = JSON.parse(await file.text());
+      if (!confirm("いまの単語と学習記録を、このファイルの内容で置き換えます。よろしいですか？")) return;
+      const n = Storage.importAll(data);
+      dataMessage(`${n}語を読み込みました`);
+      setTimeout(() => location.reload(), 900);
+    } catch (err) {
+      dataMessage("読み込めませんでした：" + err.message);
+    }
   });
 
   /* ---------- 起動 ---------- */

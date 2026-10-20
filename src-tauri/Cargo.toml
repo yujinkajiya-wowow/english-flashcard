@@ -1,0 +1,23 @@
+[package]
+name = "daily-flash"
+version = "0.1.0"
+description = "デイリーフラッシュ（デスクトップ版）"
+edition = "2021"
+rust-version = "1.90"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+
+# トラックパッドの振動（NSHapticFeedbackManager）
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "NSHapticFeedback"] }
+objc2-foundation = { version = "0.3", default-features = false, features = ["std"] }
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true

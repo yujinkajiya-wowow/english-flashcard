@@ -607,6 +607,8 @@ body[data-route="home"] {
 .settings li { padding: 14px 4px; border-bottom: 1px solid var(--line); font-size: 14px; }
 .setting-key { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .setting-key .apikey { width: 260px; }
+.setting-data { display: flex; gap: 24px; }
+.settings li.setting-note { color: var(--sub); font-size: 12px; border-bottom: 0; }
 
 /* 結果画面のボタン */
 .res-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 8px; }

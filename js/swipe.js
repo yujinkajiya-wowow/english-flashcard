@@ -21,16 +21,19 @@
   const RAW_MAX = 2.5;      // 指の移動量の上限（慣性で積み上がりすぎないように）
 
   const MAX_ROTATE = 7;     // deg
+  const EDGE_REARM = 0.9;   // 確定ラインの9割まで戻ったら、次にラインを越えたときにまた振動する
   const FLY_MS = 380;       // 確定したカードが画面外に消えるまで
   const RELEASE_MS = 160;   // wheel がこれだけ途切れたら指を離したとみなす
   const INERTIA_GAP = 120;  // ロック明けは wheel が一度これだけ途切れるまで無視（慣性の残りを捨てる）
 
   class Swipe {
-    constructor({ target, card, glowLeft, glowRight, onCommit, isInverted, isEnabled }) {
+    constructor({ target, card, glowLeft, glowRight, onCommit, onEdge, isInverted, isEnabled }) {
       this.target = target;   // transform をかける要素
       this.card = card;
       this.glow = { left: glowLeft, right: glowRight };
       this.onCommit = onCommit;
+      this.onEdge = onEdge || (() => {});  // 確定ラインを越えた瞬間（振動用）
+      this.edgeDir = null;
       this.isInverted = isInverted || (() => false);
       this.isEnabled = isEnabled || (() => true);
 
@@ -85,6 +88,7 @@
     reset() {
       this.cancel();
       this.raw = 0;
+      this.edgeDir = null;
       this._render();
     }
 
@@ -155,6 +159,12 @@
     _setRaw(raw) {
       this.raw = Math.max(-RAW_MAX, Math.min(RAW_MAX, raw));
       this._render();
+      // 確定ラインを外から越えた瞬間だけ知らせる。ライン上の小さなブレで連打しないよう、
+      // ラインより少し内側（EDGE_REARM）まで戻ってから、次の振動を許す
+      const dir = this.dir;
+      if (dir && dir !== this.edgeDir) this.onEdge(dir);
+      if (dir) this.edgeDir = dir;
+      else if (Math.abs(this.pos) < THRESHOLD * EDGE_REARM) this.edgeDir = null;
     }
 
     _release() {
@@ -171,6 +181,7 @@
       const step = () => {
         this.raw *= 0.78;
         if (Math.abs(this.raw) < 0.002) this.raw = 0;
+        if (Math.abs(this.pos) < THRESHOLD * EDGE_REARM) this.edgeDir = null;
         this._render();
         if (this.raw !== 0) this.springRaf = requestAnimationFrame(step);
       };
