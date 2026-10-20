@@ -39,6 +39,16 @@ python3 -m http.server 8000   # → http://localhost:8000
 - 判定に使うのは、その日1回目の回答だけ。結果画面の「もう一度学習する」は今日答えた単語のおさらいで、スケジュールや正答率は変えない
 - テストは、今日フラッシュカードで答えた単語だけから出題する
 
+## デスクトップ版（Mac アプリ・トラックパッドが振動する）
+
+`src-tauri/` が Tauri のデスクトップ版。中身は Web 版と同じファイルで、トラックパッドの振動（`NSHapticFeedbackManager`）だけを Rust 側で受け持つ。
+
+- main にマージすると GitHub Actions（`.github/workflows/desktop.yml`）が Mac 上でアプリを作り、[Releases の desktop-latest](../../releases/tag/desktop-latest) に `DailyFlash_*.dmg` を置く
+- Apple の署名はしていない（アドホック署名のみ）ので、初回は「システム設定 → プライバシーとセキュリティ」の「このまま開く」で起動する
+- 振動は、スワイプが確定ラインを越えた瞬間（指がまだトラックパッドに乗っているとき）に1回。Mac の振動は指が触れている間しか感じないため
+- データはブラウザ版とは別に保存される。ブラウザ版の設定画面で「JSONを書き出す」→ デスクトップ版の設定画面で「JSONを読み込む」で移す
+- 手元で作るとき：Rust と Xcode のコマンドラインツールを入れて `./scripts/prepare-dist.sh && npx @tauri-apps/cli@2.12.1 build`
+
 ## 操作
 
 - クリック / スペース：裏返す

@@ -237,7 +237,12 @@
       <li><label class="toggle"><input type="checkbox" id="opt-sound"> 効果音</label></li>
       <li><label class="toggle"><input type="checkbox" id="opt-invert"> スワイプ方向を反転</label></li>
       <li><label class="setting-key">Gemini APIキー <input type="password" id="opt-apikey" class="apikey" placeholder="キーを貼り付け" autocomplete="off"></label></li>
-      <li><button class="link" id="export-json">JSONを書き出す</button></li>
+      <li class="setting-data">
+        <button class="link" id="export-json">JSONを書き出す</button>
+        <button class="link" id="import-json">JSONを読み込む</button>
+        <input type="file" id="import-file" accept="application/json,.json" hidden>
+      </li>
+      <li class="setting-note" id="data-msg" hidden></li>
     </ul>
   </section>
 

@@ -162,6 +162,18 @@
         exportedAt: new Date().toISOString(),
       };
     },
+
+    /* exportAll() で書き出した JSON を読み込んで、いまのデータを置き換える。API キーはいまのものを残す */
+    importAll(data) {
+      if (!data || !Array.isArray(data.words)) throw new Error("デイリーフラッシュの JSON ではありません");
+      write(KEY.words, data.words);
+      write(KEY.days, data.days || {});
+      write(KEY.tests, data.tests || []);
+      const keep = { apiKey: this.getSettings().apiKey };
+      write(KEY.settings, Object.assign({}, data.settings || {}, keep));
+      write(KEY.session, null);
+      return data.words.length;
+    },
   };
 
   window.DF = window.DF || {};
