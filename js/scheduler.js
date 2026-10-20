@@ -1,13 +1,13 @@
 /*
- * 復習スケジュール（忘却曲線）
- * 初出題した日を0日目として 1, 2, 4, 7, 15, 30 日目に再出題する。
- *   stage = クリアした復習の回数（0〜6）
- *   「覚えている」→ stage+1、次のチェックポイントまでの日数後に出題
- *   「覚えていない」→ stage=0、翌日に出題（そこから1日目扱いでやり直し）
- *   30日目をクリア → mastered
+ * 復習スケジュール（エビングハウスの忘却曲線）
+ * 初出題した日を0日目として、1日後・1週間後・1ヶ月後の3回だけ復習する。
+ *   stage = クリアした復習の回数（0〜3）
+ *   「覚えている」→ stage+1、次の復習日へ（1日後 → 7日目 → 30日目）
+ *   「覚えていない」→ stage=0、翌日に出題（そこから1日後・1週間後・1ヶ月後をやり直し）
+ *   1ヶ月後をクリア → mastered（習得済み）
  */
 (function () {
-  const OFFSETS = [1, 2, 4, 7, 15, 30];
+  const OFFSETS = [1, 7, 30];
   const DAILY_NEW = 15;
 
   /* ---- 日付ユーティリティ（ローカル日付の YYYY-MM-DD） ---- */
@@ -69,16 +69,20 @@
   }
 
   /*
-   * 開発用：その日の回答をなかったことにする。
-   * 履歴からその日の分を除いて、最初から apply し直す（履歴があれば状態は再現できる）
+   * 履歴を今のルールで最初からたどり直して、stage と次の復習日を計算し直す。
+   * 復習の間隔を変えたときに、それまでのデータを新しいルールに合わせるために使う。
+   * 新しいルールの復習日より前に答えた分（前のルールで早めに出ていた復習）は、記録だけ残して数えない
    */
-  function rewind(word, date) {
+  function replay(word) {
     const history = word.history || [];
-    if (!history.some((h) => h.date === date)) return word;
     let w = Object.assign({}, word, {
       introducedDate: null, stage: 0, nextReviewDate: null, mastered: false, history: [],
     });
-    for (const h of history) if (h.date !== date) w = apply(w, h.result, h.date);
+    for (const h of history) {
+      const early = w.introducedDate && (w.mastered || (w.nextReviewDate && h.date < w.nextReviewDate));
+      if (early) w.history.push(h);
+      else w = apply(w, h.result, h.date);
+    }
     return w;
   }
 
@@ -119,6 +123,6 @@
 
   window.DF = window.DF || {};
   window.DF.Scheduler = {
-    OFFSETS, DAILY_NEW, today, addDays, apply, rewind, buildToday, dueCountOn, streak, stageLabel,
+    OFFSETS, DAILY_NEW, today, addDays, apply, replay, buildToday, dueCountOn, streak, stageLabel,
   };
 })();

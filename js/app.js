@@ -3,10 +3,15 @@
   const $ = (id) => document.getElementById(id);
   const TODAY = Scheduler.today();
   const LOCK_AFTER_COMMIT = 500;
-  // 開発中は結果画面に「もう一度」ボタンを出す。本番公開するときは false にする
-  const DEV = true;
+  const SCHEDULE_VERSION = 2; // 2：復習は1日後・1週間後・1ヶ月後
 
   Storage.seedIfEmpty(TODAY);
+
+  // 復習の間隔を変えたので、それまでのデータを新しいルールで計算し直す（1回だけ）
+  if ((Storage.getSettings().scheduleVersion || 1) < SCHEDULE_VERSION) {
+    Storage.saveWords(Storage.getWords().map(Scheduler.replay));
+    Storage.saveSettings({ scheduleVersion: SCHEDULE_VERSION });
+  }
 
   /* =========================================================
    * ルーティング（#/home, #/flash, #/add, #/test, #/list, #/settings）
@@ -65,6 +70,17 @@
     return { date: TODAY, queue, first: {}, cleared: 0 };
   }
 
+  /* もう一度学習する：今日フラッシュカードで答えた単語をおさらいする。
+     復習スケジュールや正答率は、その日1回目の回答で決まるので、ここでは何も変えない */
+  function todaysWordIds() {
+    return Storage.getWords()
+      .filter((w) => (w.history || []).some((h) => h.date === TODAY))
+      .map((w) => w.id);
+  }
+  function newPractice() {
+    return { date: TODAY, queue: shuffle(todaysWordIds()), first: {}, cleared: 0, practice: true };
+  }
+
   function hasMoreToday() {
     const { review, fresh } = Scheduler.buildToday(Storage.getWords(), TODAY);
     return review.length + fresh.length > 0;
@@ -98,6 +114,7 @@
   }
 
   function updateProgress() {
+    $("view-flash").classList.toggle("is-practice", !!(session && session.practice));
     const left = session ? session.queue.length : 0;
     const done = session ? session.cleared : 0;
     $("remaining-count").textContent = left;
@@ -209,7 +226,7 @@
     typing = null;
 
     const id = session.queue.shift();
-    if (!(id in session.first)) {
+    if (!session.practice && !(id in session.first)) {
       // 復習スケジュールはこのセッションで最初に答えた結果で決める
       session.first[id] = result;
       const w = Storage.getWord(id);
@@ -254,7 +271,9 @@
     $("session-progress").style.width = "100%";
     const more = hasMoreToday();
     $("res-more").hidden = !more;
-    $("res-again").hidden = !DEV;
+    $("res-again").hidden = !todaysWordIds().length;
+    // 続けて出題するものがあれば、そちらを主役にする
+    $("res-again").classList.toggle("btn-sub", more);
     $("res-note").textContent = day.total ? "" : "今日出題する単語はありません。単語を追加してください";
   }
 
@@ -266,13 +285,12 @@
     showCard();
   });
 
-  // 今日の回答をなかったことにして最初からやり直す（スケジュール・正答数も巻き戻る）
   $("res-again").addEventListener("click", () => {
-    Storage.saveWords(Storage.getWords().map((w) => Scheduler.rewind(w, TODAY)));
-    Storage.setDay(TODAY, null);
-    Storage.clearSession();
-    session = null;
-    enterFlash();
+    session = newPractice();
+    Storage.saveSession(session);
+    if (!session.queue.length) return showResult();
+    showStage();
+    showCard();
   });
 
   card.addEventListener("click", () => {
