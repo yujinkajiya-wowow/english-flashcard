@@ -1,10 +1,21 @@
 # デスクトップ版（Mac アプリ）を作って、Releases の「desktop-latest」に置く。
-# main にマージされるたびに作り直す。Actions のページから手動でも動かせる
+# main にマージされるたびに作り直す。Actions のページから手動でも動かせる。
+# PR では作れるかどうかの確認だけして、できた dmg は Actions の成果物に置く（Releases には出さない）
 name: Desktop app (macOS)
 
 on:
   push:
     branches: [main]
+    paths:
+      - "index.html"
+      - "manifest.webmanifest"
+      - "css/**"
+      - "js/**"
+      - "icons/**"
+      - "src-tauri/**"
+      - "scripts/**"
+      - ".github/workflows/desktop.yml"
+  pull_request:
     paths:
       - "index.html"
       - "manifest.webmanifest"
@@ -20,7 +31,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: desktop-build
+  group: desktop-build-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -48,12 +59,21 @@ jobs:
       - name: アプリを作る
         run: npx --yes @tauri-apps/cli@2.12.1 build --target universal-apple-darwin --bundles dmg
 
+      - name: PR のときは成果物として置く
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: DailyFlash-dmg
+          path: src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
+
       - name: desktop-latest タグを今のコミットに付け直す
+        if: github.event_name != 'pull_request'
         run: |
           git tag -f desktop-latest
           git push -f origin desktop-latest
 
       - name: Releases に置く
+        if: github.event_name != 'pull_request'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: desktop-latest
