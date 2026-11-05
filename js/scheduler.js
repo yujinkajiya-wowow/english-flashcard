@@ -9,6 +9,7 @@
 (function () {
   const OFFSETS = [1, 7, 30];
   const DAILY_NEW = 15;
+  const REVIEW_LIMIT = 20; // 1日に出す復習の上限（設定で変えられる。0 は上限なし）
 
   /* ---- 日付ユーティリティ（ローカル日付の YYYY-MM-DD） ---- */
   function fmt(d) {
@@ -86,12 +87,21 @@
     return w;
   }
 
-  /* 今日出す単語の id 一覧（復習 → 新規の順） */
-  function buildToday(words, date) {
+  /*
+   * 今日出す単語の id 一覧（復習 → 新規の順）
+   * 復習は期限の古い順に reviewLimit 枚まで（今日もう答えた復習の数を差し引く）。
+   * あふれた分は復習日をそのままにしておくので、翌日以降に古い順で出てくる。
+   * reviewLimit が 0 / Infinity なら上限なし
+   */
+  function buildToday(words, date, reviewLimit = REVIEW_LIMIT) {
     const introducedToday = words.filter((w) => w.introducedDate === date).length;
+    const reviewedToday = words.filter((w) =>
+      (w.history || []).some((h) => h.date === date && h.result !== "new")).length;
+    const limit = reviewLimit > 0 ? reviewLimit : Infinity;
     const due = words
       .filter((w) => !w.mastered && w.introducedDate && w.nextReviewDate && w.nextReviewDate <= date)
-      .sort((a, b) => a.nextReviewDate.localeCompare(b.nextReviewDate));
+      .sort((a, b) => a.nextReviewDate.localeCompare(b.nextReviewDate) || a.introducedDate.localeCompare(b.introducedDate))
+      .slice(0, Math.max(0, limit - reviewedToday));
     const quota = Math.max(0, DAILY_NEW - introducedToday);
     const fresh = words
       .filter((w) => !w.introducedDate)
@@ -123,6 +133,6 @@
 
   window.DF = window.DF || {};
   window.DF.Scheduler = {
-    OFFSETS, DAILY_NEW, today, addDays, apply, replay, buildToday, dueCountOn, streak, stageLabel,
+    OFFSETS, DAILY_NEW, REVIEW_LIMIT, today, addDays, apply, replay, buildToday, dueCountOn, streak, stageLabel,
   };
 })();

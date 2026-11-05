@@ -145,7 +145,7 @@
 
     /* ---- 設定 ---- */
     getSettings() {
-      return Object.assign({ sound: true, invert: false, apiKey: "" }, read(KEY.settings, {}));
+      return Object.assign({ sound: true, invert: false, apiKey: "", reviewLimit: 20 }, read(KEY.settings, {}));
     },
     saveSettings(patch) {
       const s = Object.assign(this.getSettings(), patch);
