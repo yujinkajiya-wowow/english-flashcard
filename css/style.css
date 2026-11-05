@@ -617,3 +617,22 @@ body[data-route="home"] {
 .res-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 8px; }
 .res-actions .btn { margin: 0; }
 .btn.btn-sub { background: #fff; color: var(--fg); }
+
+/* ---------- Weblio study から貼り付け ---------- */
+.weblio { margin-top: 40px; }
+.weblio-box { margin-top: 12px; }
+.weblio-box textarea { height: 72px; font-size: 13px; }
+.weblio-list { list-style: none; margin: 8px 0 0; padding: 0; max-height: 360px; overflow-y: auto; border-top: 1px solid var(--line); }
+.weblio-list li { display: grid; grid-template-columns: 24px 1fr 1fr auto; gap: 12px; align-items: center; padding: 8px 4px; border-bottom: 1px solid var(--line); font-size: 14px; }
+.weblio-list li label { display: contents; cursor: pointer; }
+.weblio-list input { width: 16px; height: 16px; margin: 0; padding: 0; accent-color: var(--fg); }
+.weblio-list .en { font-family: var(--font-en), var(--font-ja); font-weight: 700; }
+.weblio-list .en, .weblio-list .ja { text-align: left; min-width: 0; overflow-wrap: anywhere; }
+.weblio-list .tag { color: var(--sub); font-size: 11px; }
+.weblio-list li.is-skip { color: #bbb; }
+.weblio-box .add-msg { margin-bottom: 10px; }
+.weblio-help { margin: 14px 4px 0; color: var(--sub); font-size: 11px; word-break: break-all; }
+
+.setting-num { display: inline-flex; align-items: center; gap: 8px; }
+.setting-num input { width: 72px; padding: 6px 8px; text-align: right; }
+.setting-sub { margin: 6px 0 0; color: var(--sub); font-size: 12px; }

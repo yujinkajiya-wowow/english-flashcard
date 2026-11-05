@@ -66,8 +66,10 @@
     return a;
   }
 
-  function newSession() {
-    const { review, fresh } = Scheduler.buildToday(Storage.getWords(), TODAY);
+  /* 復習の上限（設定）。「続けて出題する」から始めたときは上限なしで、残りの復習も出す */
+  function newSession(noLimit) {
+    const limit = noLimit ? Infinity : Storage.getSettings().reviewLimit;
+    const { review, fresh } = Scheduler.buildToday(Storage.getWords(), TODAY, limit);
     // 復習を先に、新規を後に（それぞれの中はシャッフル）
     const queue = shuffle(review).concat(shuffle(fresh));
     return { date: TODAY, queue, first: {}, cleared: 0 };
@@ -85,7 +87,7 @@
   }
 
   function hasMoreToday() {
-    const { review, fresh } = Scheduler.buildToday(Storage.getWords(), TODAY);
+    const { review, fresh } = Scheduler.buildToday(Storage.getWords(), TODAY, Infinity);
     return review.length + fresh.length > 0;
   }
 
@@ -281,7 +283,7 @@
   }
 
   $("res-more").addEventListener("click", () => {
-    session = newSession();
+    session = newSession(true);
     Storage.saveSession(session);
     if (!session.queue.length) return showResult();
     showStage();
@@ -493,6 +495,11 @@
   // 「英単語,日本語」の行を貼り付けたら、まとめて追加
   wordInput.addEventListener("paste", (e) => {
     const text = (e.clipboardData || window.clipboardData).getData("text");
+    // Weblio のブックマークレットでコピーしたものは、確認してから追加する
+    if (isWeblio(text)) {
+      e.preventDefault();
+      return openWeblio(text);
+    }
     const pairs = parseLines(text);
     if (!pairs.length) return; // ふつうの単語の貼り付け
     e.preventDefault();
@@ -504,6 +511,87 @@
   });
 
   wordInput.addEventListener("input", () => addMessage(""));
+
+  /* ---------- Weblio study から貼り付け ----------
+     ブックマークレット（bookmarklet/weblio.js）がコピーする「# Weblio study」＋「英単語<タブ>正解」の行を、
+     一覧で確認してから追加する。登録済みの単語と、貼り付けた中で2回目以降に出てくる単語は追加しない */
+  let weblioItems = [];
+  const isWeblio = (text) => /^\s*# ?Weblio/i.test(text);
+
+  function openWeblio(text) {
+    $("weblio-box").hidden = false;
+    if (text != null) $("weblio-text").value = text;
+    readWeblio();
+    $("weblio-text").focus();
+  }
+
+  function readWeblio() {
+    const lines = $("weblio-text").value.split(/\r?\n/).filter((l) => !/^\s*#/.test(l)).join("\n");
+    const registered = new Set(Storage.getWords().map((w) => w.word.toLowerCase()));
+    const seen = new Set();
+    weblioItems = parseLines(lines).map(([word, meaning]) => {
+      const key = word.toLowerCase();
+      const skip = registered.has(key) ? "登録済み" : seen.has(key) ? "重複" : "";
+      seen.add(key);
+      return { word, meaning, skip, checked: !skip };
+    });
+    renderWeblio();
+  }
+
+  function renderWeblio() {
+    const ul = $("weblio-list");
+    ul.innerHTML = "";
+    ul.hidden = !weblioItems.length;
+    weblioItems.forEach((it, i) => {
+      const li = document.createElement("li");
+      if (it.skip) li.className = "is-skip";
+      li.innerHTML = `<label><input type="checkbox"><span class="en"></span><span class="ja"></span><span class="tag"></span></label>`;
+      const box = li.querySelector("input");
+      box.checked = it.checked;
+      box.disabled = !!it.skip;
+      box.dataset.i = i;
+      li.querySelector(".en").textContent = it.word;
+      li.querySelector(".ja").textContent = it.meaning;
+      li.querySelector(".tag").textContent = it.skip ? it.skip + "（スキップ）" : "";
+      ul.appendChild(li);
+    });
+    updateWeblioCount();
+  }
+
+  function updateWeblioCount() {
+    const n = weblioItems.filter((it) => it.checked && !it.skip).length;
+    const skipped = weblioItems.filter((it) => it.skip).length;
+    $("weblio-add").disabled = !n;
+    $("weblio-add").textContent = n ? `${n}語を追加する` : "追加する";
+    $("weblio-msg").textContent = !weblioItems.length
+      ? ($("weblio-text").value.trim() ? "単語が読み取れませんでした（「英単語<タブ>日本語」の行が必要）" : "")
+      : skipped
+        ? `${skipped}語はスキップします：${weblioItems.filter((it) => it.skip).map((it) => it.word).join(", ")}`
+        : "";
+  }
+
+  function closeWeblio() {
+    weblioItems = [];
+    $("weblio-text").value = "";
+    renderWeblio();
+    $("weblio-box").hidden = true;
+  }
+
+  $("weblio-open").addEventListener("click", () => ($("weblio-box").hidden ? openWeblio() : closeWeblio()));
+  $("weblio-text").addEventListener("input", readWeblio);
+  $("weblio-list").addEventListener("change", (e) => {
+    const it = weblioItems[e.target.dataset.i];
+    if (it) it.checked = e.target.checked;
+    updateWeblioCount();
+  });
+  $("weblio-cancel").addEventListener("click", closeWeblio);
+  $("weblio-add").addEventListener("click", () => {
+    const picked = weblioItems.filter((it) => it.checked && !it.skip);
+    const skipped = weblioItems.filter((it) => it.skip).map((it) => it.word);
+    const n = addPairs(picked.map((it) => [it.word, it.meaning]));
+    closeWeblio();
+    addMessage(`Weblio から${n}語追加しました` + (skipped.length ? `（スキップ：${skipped.join(", ")}）` : ""));
+  });
 
   /* =========================================================
    * 単語一覧
@@ -567,6 +655,12 @@
   $("opt-invert").checked = settings.invert;
   $("opt-sound").addEventListener("change", (e) => Storage.saveSettings({ sound: e.target.checked }));
   $("opt-invert").addEventListener("change", (e) => Storage.saveSettings({ invert: e.target.checked }));
+  $("opt-review-limit").value = settings.reviewLimit;
+  $("opt-review-limit").addEventListener("change", (e) => {
+    const n = Math.max(0, Math.min(999, Math.round(Number(e.target.value)) || 0));
+    e.target.value = n;
+    Storage.saveSettings({ reviewLimit: n });
+  });
   $("opt-apikey").value = settings.apiKey;
   $("opt-apikey").addEventListener("change", (e) => Storage.saveSettings({ apiKey: e.target.value.trim() }));
   function dataMessage(text) {

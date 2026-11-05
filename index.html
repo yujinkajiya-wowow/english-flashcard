@@ -228,6 +228,19 @@
         <button class="btn" id="add-save" type="button">保存</button>
       </div>
     </div>
+    <div class="weblio">
+      <button class="link" id="weblio-open" type="button">Weblio study から貼り付け</button>
+      <div class="weblio-box" id="weblio-box" hidden>
+        <textarea id="weblio-text" placeholder="ブックマークレットでコピーした内容をここに貼り付け（⌘V）" spellcheck="false"></textarea>
+        <ul class="weblio-list" id="weblio-list" hidden></ul>
+        <p class="add-msg" id="weblio-msg"></p>
+        <div class="setting-confirm-actions">
+          <button class="btn" id="weblio-add" type="button" disabled>追加する</button>
+          <button class="btn btn-sub" id="weblio-cancel" type="button">やめる</button>
+        </div>
+        <p class="weblio-help">ブックマークレットの登録方法：https://yujinkajiya-wowow.github.io/english-flashcard/bookmarklet.html</p>
+      </div>
+    </div>
   </section>
 
   <!-- 設定 -->
@@ -236,6 +249,8 @@
     <ul class="settings">
       <li><label class="toggle"><input type="checkbox" id="opt-sound"> 効果音</label></li>
       <li><label class="toggle"><input type="checkbox" id="opt-invert"> スワイプ方向を反転</label></li>
+      <li><label class="setting-key">1日の復習の上限 <span class="setting-num"><input type="number" id="opt-review-limit" min="0" max="999" step="1"> 枚</span></label>
+        <p class="setting-sub">期限が過ぎた復習が溜まっていても、古い順にこの枚数まで出す。0 で上限なし</p></li>
       <li><label class="setting-key">Gemini APIキー <input type="password" id="opt-apikey" class="apikey" placeholder="キーを貼り付け" autocomplete="off"></label></li>
       <li class="setting-data">
         <button class="link" id="export-json">JSONを書き出す</button>
